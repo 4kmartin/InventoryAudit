@@ -1,3 +1,7 @@
 csv
 config.toml
 datbase
+python/bin
+python/lib
+python/include
+python/pyvenv.cfg
