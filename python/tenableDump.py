@@ -1,4 +1,5 @@
 from tenable.io import TenableIO
+from datetime import date
 
 class TenableAsset:
 
@@ -7,6 +8,9 @@ class TenableAsset:
         self.fqdn = fqdn
         self.mac = mac_addr
         self.ip = ip_addr
+
+    def into_tuple(self) ->tuple[str,int,str,str,str,str]:
+        return ("tenable.io", date.today().toordinal(), self.name, self.fqdn, self.ip, self.mac)
         
 
 def get_tenable_assets (access_key:str, secret_key:str) -> List[Dict]:
