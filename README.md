@@ -7,6 +7,8 @@ Pulls Disparate network inventories from various sources and captures a point in
   - pip
   - pyTenable
   - SQLite3
+  - requests-oauthlib
+  - oauthlib
 
 - PowerShell 
   - DHCPServer Module
