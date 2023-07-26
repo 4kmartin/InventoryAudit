@@ -9,6 +9,7 @@ Pulls Disparate network inventories from various sources and captures a point in
   - SQLite3
   - requests-oauthlib
   - oauthlib
+  - PyYAML
 
 - PowerShell 
   - DHCPServer Module
