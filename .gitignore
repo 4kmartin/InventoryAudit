@@ -5,3 +5,4 @@ python/bin
 python/lib
 python/include
 python/pyvenv.cfg
+python/__pycache__
