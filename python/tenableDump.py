@@ -1,7 +1,8 @@
 from tenable.io import TenableIO
 from datetime import date
+from python.asset import Asset
 
-class TenableAsset:
+class TenableAsset (Asset):
 
     def __init__(self, host_name:str, fqdn:str, mac_addr:str, ip_addr:str):
         self.name = host_name
