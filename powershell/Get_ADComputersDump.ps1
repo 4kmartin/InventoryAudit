@@ -1,4 +1,4 @@
-$OUTPUT_FILE = $1
+$OUTPUT_FILE = $args[0]
 
 Import-Module ActiveDirectory
 
