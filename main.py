@@ -55,7 +55,7 @@ if __name__ == '__main__':
 				)
 			case "Active Directory":
 				from python.powershell import get_ad_computers_dump
-				get_ad_computers_dump("csv\/ADOut.csv")
+				assets += get_ad_computers_dump("csv\/ADOut.csv")
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
