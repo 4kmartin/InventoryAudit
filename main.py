@@ -53,8 +53,11 @@ if __name__ == '__main__':
 					mb["client secret"],
 					mb["account id"]
 				)
+			case "Active Directory":
+				from python.powershell import get_ad_computers_dump
+				get_ad_computers_dump("csv\/ADOut.csv")
 			case _:
-				print(f"{source} has not yet been implimented")
+	 			print(f"{source} has not yet been implimented")
 
 	#insert list into DB
 	db = connect(get_db_path())

@@ -13,6 +13,7 @@ Pulls Disparate network inventories from various sources and captures a point in
 
 - PowerShell 
   - DHCPServer Module
+  - ActiveDirectory Module
   - DNSServer Module
 
 - Windows Server >= 2016
