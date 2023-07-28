@@ -1,5 +1,5 @@
 from os.path import isfile
-import os.name
+from os import name as os_name
 import yaml
 
 def db_exists() -> bool:
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 					mb["account id"]
 				)
 			case "Active Directory":
-				if os.name == "nt":
+				if os_name == "nt":
 					from python.powershell import get_ad_computers_dump
 					assets += get_ad_computers_dump("csv\/ADOut.csv")
 				else:
