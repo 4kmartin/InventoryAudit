@@ -1,3 +1,4 @@
+from python.reports import report_discrepencies, report_new_assets
 from os.path import isfile
 from os import name as os_name
 import yaml
@@ -69,3 +70,11 @@ if __name__ == '__main__':
 		db,
 		list(map(lambda x: x.to_tuple(),assets))
 	)
+
+	# run reports
+	# print(report_new_assets(db))
+	new = '\n'.join(list(map(lambda x: ", ".join(x), report_new_assets(db))))
+	# print(report_discrepencies(db, CONFIG["data sources"]))
+	discrepencies = '\n'.join(map(lambda x: ', '.join(x), report_discrepencies(db, CONFIG["data sources"])))
+	
+	print(f"NEWLY DISCOVERED :\n{new}\n\nDISCREPENSIES:\n{discrepencies}")
