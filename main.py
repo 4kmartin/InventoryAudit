@@ -1,4 +1,5 @@
 from os.path import isfile
+import os.name
 import yaml
 
 def db_exists() -> bool:
@@ -54,8 +55,11 @@ if __name__ == '__main__':
 					mb["account id"]
 				)
 			case "Active Directory":
-				from python.powershell import get_ad_computers_dump
-				assets += get_ad_computers_dump("csv\/ADOut.csv")
+				if os.name == "nt":
+					from python.powershell import get_ad_computers_dump
+					assets += get_ad_computers_dump("csv\/ADOut.csv")
+				else:
+					print(f"cannot run {source} query on non Windows OS")
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
