@@ -17,7 +17,8 @@ def _run_statement (connection:sqlite3.Connection,statement:str) -> None:
 
 def _run_select_statement (connection:sqlite3.Connection, statement:str) -> tuple:
     try:
-        return connection.cursur().execute(statement).fetchone()
+        return connection.cursor().execute(statement).fetchall()
+
     except Error as e:
         print(e)
         quit(1)
