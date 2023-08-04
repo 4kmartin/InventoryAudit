@@ -6,5 +6,5 @@ setup(
     description="Collects inventories from disparent databases for comparison",
     author="Anthany Martin",
     author_email="4kmartin@gmail.com",
-    packages=["pyTenable", "sqlite3","requests-oauthlib","oauthlib","pyyaml"]
+    packages=["PyTenable", "pysqlite3","requests-oauthlib","oauthlib","pyyaml"]
 )
