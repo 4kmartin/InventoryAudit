@@ -1,4 +1,4 @@
-from python.reports import report_discrepencies, report_new_assets
+from python.reports import report_discrepencies, report_new_assets, write_report_to_file
 from os.path import isfile
 from os import name as os_name
 import yaml
@@ -84,8 +84,17 @@ if __name__ == '__main__':
 
 	# run reports
 	# print(report_new_assets(db))
-	new = '\n'.join(list(map(lambda x: ", ".join(x), report_new_assets(db))))
+	new = report_new_assets(db)
 	# print(report_discrepencies(db, CONFIG["data sources"]))
-	discrepencies = '\n'.join(map(lambda x: ', '.join(x), report_discrepencies(db, CONFIG["data sources"])))
+	discrepencies = report_discrepencies(db, CONFIG["data sources"])
 	
-	print(f"NEWLY DISCOVERED :\n{new}\n\nDISCREPENSIES:\n{discrepencies}")
+	write_report_to_file(
+		"New Assets", 
+		new, 
+		f"The following Report Details assets that have only appeared in the last month when compared to the retention duration of {CONFIG['database']['retention period']} {CONFIG['database']['retention units']}")
+
+	write_report_to_file(
+		"Assets Not Found in all Databases", 
+		discrepencies,
+		f"The Following Report Details Assets that appear in at least one, but not all data sources"
+	)
