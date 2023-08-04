@@ -1,6 +1,7 @@
 from datetime import date
 from python.dbMaintainance import _run_select_statement
 from sqlite3 import Connection
+from os.path import join
 
 def report_new_assets (connection:Connection) -> list[tuple]:
     today = date.today().toordinal()
@@ -18,11 +19,11 @@ def report_unique_to(connection:Connection, source:str) -> list[tuple]:
     return _run_select_statement(connection, statement)
 
 def write_report_to_file (report_name:str,query_output:list[tuple],description:str=""):
-    report = f"{description}\nSource, Date, Hostname, Fully Qualified Domain Name, IPv4 Address, MAC Address\n"
+    report = f"{description}\nHostname, Fully Qualified Domain Name, IPv4 Address, MAC Address\n"
     for asset in query_output:
         report += ", ".join(asset)
         report += "\n"
-    file = f"csv\/{report_name}.csv"
+    file = join("csv",f"{report_name}.csv")
     with open(file, "w") as report_file:
         report_file.write(report)
         report_file.close()
