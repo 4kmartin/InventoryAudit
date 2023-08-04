@@ -1,7 +1,9 @@
 Import-Module DnsServer
 
-$zone = $args[0]
+$ZONE = $args[0]
 
-$server = $args[1]
+$SERVER = $args[1]
 
-Get-DnsServerResourceRecord -ZoneName $zone -ComputerName $server | ForEach-Object {$_.RecordData.ipv4address.IpAddressToString , $_.HostName}
+$OUTPUT_FILE =$args[2]
+
+Get-DnsServerResourceRecord -RRType "A" -ZoneName $ZONE -ComputerName $SERVER | Select -Property Hostname -ExpandProperty RecordData|Export-CSV -Path $OUTPUT_FILE
