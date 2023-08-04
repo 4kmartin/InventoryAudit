@@ -61,6 +61,17 @@ if __name__ == '__main__':
 					assets += get_ad_computers_dump("csv\/ADOut.csv")
 				else:
 					print(f"cannot run {source} query on non Windows OS")
+			case "DNS":
+				if os_name == "nt":
+					from python.powershell import get_dns_dump
+					dns = CONFIG["DNS"]
+					assets += get_dns_dump(
+						dns["zone"],
+						dns["server"],
+						"csv\/DNSOut.csv"
+					)
+				else:
+					print(f"cannot run {source} query on non Windows OS")
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
