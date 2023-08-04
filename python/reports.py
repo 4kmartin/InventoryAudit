@@ -16,3 +16,14 @@ def report_discrepencies (connection:Connection, data_sources:list[str]) -> list
 def report_unique_to(connection:Connection, source:str) -> list[tuple]:
     statement = f"SELECT hostname, fqdn, ip, mac FROM discovered_assets WHERE source = '{source}' EXCEPT SELECT hostname,fqdn,ip,mac FROM discovered_assets WHERE source != '{source}'"
     return _run_select_statement(connection, statement)
+
+def write_report_to_file (report_name:str,query_output:list[tuple],description:str=""):
+    report = f"{description}\nSource, Date, Hostname, Fully Qualified Domain Name, IPv4 Address, MAC Address\n"
+    for asset in query_output:
+        report += ", ".join(asset)
+        report += "\n"
+    file = f"csv\/{report_name}.csv"
+    with open(file, "w") as report_file:
+        report_file.write(report)
+        report_file.close()
+        
