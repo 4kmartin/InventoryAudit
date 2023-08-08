@@ -32,7 +32,9 @@ def get_ad_computers_dump(output_file_path:str)->list[ADAsset]:
 		assets = out.readlines()
 		out.close()
 		for asset in assets:
-			adassets.append(ADAsset(*asset.split(",")))
+			name = asset.split(",")[1]
+			fqdn = asset.split(",")[0]
+			adassets.append(ADAsset(name,fqdn))
 	return adassets
 
 def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
@@ -42,5 +44,7 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 		assets = out.readlines()
 		out.close()
 		for asset in assets:
-			dnsassets.append(DNSAsset(*asset.split(", ")[:1]))
+			name = asset.split(",")[0]
+			ip = asset.split(",")[1]
+			dnsassets.append(DNSAsset(name, ip))
 	return dnsassets
