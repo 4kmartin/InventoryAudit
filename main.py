@@ -1,5 +1,5 @@
 from python.reports import report_discrepencies, report_new_assets, write_report_to_file
-from os.path import isfile
+from os.path import isfile, join
 from os import name as os_name
 import yaml
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 			case "Active Directory":
 				if os_name == "nt":
 					from python.powershell import get_ad_computers_dump
-					assets += get_ad_computers_dump("csv\/ADOut.csv")
+					assets += get_ad_computers_dump(join("csv","ADOut.csv"))
 				else:
 					print(f"cannot run {source} query on non Windows OS")
 			case "DNS":
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 					assets += get_dns_dump(
 						dns["zone"],
 						dns["server"],
-						"csv\/DNSOut.csv"
+						join("csv","DNSOut.csv")
 					)
 				else:
 					print(f"cannot run {source} query on non Windows OS")
