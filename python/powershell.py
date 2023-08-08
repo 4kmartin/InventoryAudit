@@ -45,7 +45,7 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 	with open(output_file) as out:
 		assets = out.readlines()
 		out.close()
-		for asset in assets:
+		for asset in assets[2:]:
 			name = asset.split(",")[0]
 			ip = asset.split(",")[1]
 			dnsassets.append(DNSAsset(name, ip))
