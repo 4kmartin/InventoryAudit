@@ -30,7 +30,9 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
     while response.json()["total"] > offset + 100:
         for asset in response.json()["rows"]:
             name = asset["name"]
-            mac = asset["custom_fields"]["Wifi MAC address"]["value"] if asset["custom_fields"]["Wifi MAC Address"]["value"] != "" else asset["custom_fields"]["Ethernet MAC Address"]["value"]
+            wifi_mac = asset["custom_fields"]["Wifi MAC address"]["value"]
+            eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
+            mac = wifi_mac if wifi_mac != "" else eth_mac
             assets.append(
                 SnipeItAsset(
                     name,
@@ -40,8 +42,6 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
         offset += 100
     return assets
 
-
 def _paginated_get_req (url:str, headers:dict[str,str],limit:int,offset:int) -> Response:
     modified_url = "{url}?limit={limit}&offset={offset}&sort=id&order=asc"
-
     return get(url, headers=headers)

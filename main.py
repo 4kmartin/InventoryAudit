@@ -72,6 +72,9 @@ if __name__ == '__main__':
 					)
 				else:
 					print(f"cannot run {source} query on non Windows OS")
+			case "Snipe-IT":
+				from python.snipeITDump import get_all_asset_names
+				assets += get_all_asset_names(CONFIG["Snipe-IT"]["url"],CONFIG["Snipe-IT"]["personal access token"])
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
