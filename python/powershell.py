@@ -23,7 +23,7 @@ class DNSAsset(Asset):
 
 		
 def run_powershell_script(path_to_script:str, *arguments) :
-	subprocess.Popen(["pwsh","-NoProfile", path_to_script] + list(arguments), stdout=sys.stdout).communicate()
+	subprocess.Popen(["powershell","-NoProfile", path_to_script] + list(arguments), stdout=sys.stdout).communicate()
 
 def get_ad_computers_dump(output_file_path:str)->list[ADAsset]:
 	adassets =[]
