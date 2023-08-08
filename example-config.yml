@@ -1,0 +1,37 @@
+---
+data sources: 
+- Active Directory
+- Azure Active Directory
+- DHCP
+- DNS
+- Elastic Security
+- Malwarebytes
+- Manage Engine
+- Meraki
+- RunZero
+- Snipe-IT
+- Tenable
+
+database: 
+ path: database/assets.db
+ retention period: 3
+ retention units: Months
+
+Malwarebytes:
+ client id: <client id>
+ client secret: <client secret>
+ account id: <account id>
+ groups:
+  - <group name>
+
+Tenable:
+ access key: <access key>
+ secret key: <secret key>
+
+DNS:
+ server: <server>
+ zone: <zone>
+
+Snipe-IT:
+ url: <url>
+ personal access token: <token>
