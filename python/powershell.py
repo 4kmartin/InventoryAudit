@@ -31,7 +31,7 @@ def get_ad_computers_dump(output_file_path:str)->list[ADAsset]:
 	with open(output_file_path) as out:
 		assets = out.readlines()
 		out.close()
-		for asset in assets:
+		for asset in assets[2:]:
 			print(asset)
 			quit(1)
 			name = asset.split(",")[1]
