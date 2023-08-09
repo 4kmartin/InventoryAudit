@@ -9,7 +9,7 @@ class SnipeItAsset (Asset):
         self.hostname = name
         self.mac = mac
 
-    def to_tuple(self) -> tuple(str,int,str,str,str,str):
+    def to_tuple(self) -> tuple[str,int,str,str,str,str]:
         return ("Snipe-IT", date.today().toordinal(), self.hostname, "", "", self.mac)
 
 
