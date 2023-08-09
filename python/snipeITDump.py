@@ -30,9 +30,12 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
     while response.json()["total"] > offset + 100:
         for asset in response.json()["rows"]:
             name = asset["name"]
-            wifi_mac = asset["custom_fields"]["Wifi MAC address"]["value"]
-            eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
-            mac = wifi_mac if wifi_mac != "" else eth_mac
+            try:
+                wifi_mac = asset["custom_fields"]["Wifi MAC address"]["value"]
+                eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
+                mac = wifi_mac if wifi_mac != "" else eth_mac
+            except KeyError:
+                mac = ""
             assets.append(
                 SnipeItAsset(
                     name,
