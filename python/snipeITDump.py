@@ -13,7 +13,7 @@ class SnipeItAsset (Asset):
         return ("Snipe-IT", date.today().toordinal(), self.hostname, "", "", self.mac)
 
 
-def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[SnipeITAsset]:
+def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[SnipeItAsset]:
 
     url = f"{snipe_it_url}/api/v1/hardware"
 
