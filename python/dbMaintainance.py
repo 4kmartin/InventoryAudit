@@ -31,8 +31,12 @@ def connect(db_file:str) -> sqlite3.Connection:
         print(e)
         quit(1)
 
-def create_asset_table (connection:sqlite3.Connection) ->None:
-    statement = "CREATE TABLE IF NOT EXISTS discovered_assets (source, datefound INTEGER, hostname, fqdn, ip, mac);"
+def drop_table (connection:sqlite3.Connection, table_name:str):
+    statement = f"DROP TABLE IF EXISTS {table_name};"
+    _run_statement(connection, statement)
+
+def create_asset_table (connection:sqlite3.Connection, table_name:str = "discovered_assets", table_header:tuple[str]=("source", "datefound", "hostname","fqdn","ip","mac")) ->None:
+    statement = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(table_header)});"
     _run_statement(connection,statement)
 
 def cull_asset_table (connection:sqlite3.Connection,retention_days:int) -> None:
@@ -40,7 +44,42 @@ def cull_asset_table (connection:sqlite3.Connection,retention_days:int) -> None:
     statement = f"DELETE FROM discovered_assets WHERE date_found < {target_date}"
     _run_statement(connection,statement)
 
-def insert_assets(connection:sqlite3.Connection, assets:list[tuple]) -> None:
-    map(lambda x: print(x), assets)
-    connection.cursor().executemany("INSERT INTO discovered_assets (source, datefound, hostname, fqdn, ip, mac) VALUES(?, ?, ?, ?, ?, ?);", assets)
+def insert_assets(connection:sqlite3.Connection, assets:list[tuple], table_name:str="discovered_assets", table_header:tuple[str]=("source","datefound","hostname","fqdn","ip","mac")) -> None:
+    # map(lambda x: print(x), assets)
+    connection.cursor().executemany(f"INSERT INTO {table_name} ({', '.join(table_header)}) VALUES(?, ?, ?, ?, ?, ?);", assets)
     connection.commit()
+
+def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
+    """Colates all the duplicate data into single assets on a seperate table, optionally you can ignore data provided by a specific source"""
+    table_name = "collated_assets"
+    table_header = ("name", "fqdn", "ip", "mac")
+    statement = "\n".join(("SELECT DISTINCT",
+        "ifnull(a.hostname, b.hostname) as name,",
+        "ifnull(a.fqdn, b.fqdn) as fqdn,",
+        "ifnull(a.ip, b.ip) as ip,",
+        "ifnull(a.mac, b.mac) as mac",
+        f"FROM (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) a",
+        f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) b on a.mac = b.mac;"
+    ))
+    drop_table(connection, table_name)
+    create_asset_table(connection, table_name, table_header)
+    insert_assets(connection, _run_select_statement(connection,statement),table_name,table_header)
+    matching_name = "\n".join(
+        (
+            "SELECT DISTINCT",
+            "ifnull(a.hostname, b.hostname) as name,",
+            "ifnull(a.fqdn, b.fqdn) as fqdn,",
+            "ifnull(a.ip,b.ip) as ip,",
+            f"FROM (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) a",
+            f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) b on a.hostname = b.hostname;"
+        )
+    )
+    statement = "\n".join(
+        (
+            "SELECT *",
+            f"FROM (\n{matching_name})",
+            f"WHERE name NOT IN (SELECT name FROM {table_name});"
+        )
+    )
+    insert_assets(connection,_run_select_statement(connection,statement),table_name,table_header)
+    
