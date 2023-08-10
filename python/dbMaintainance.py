@@ -70,6 +70,7 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
             "ifnull(a.hostname, b.hostname) as name,",
             "ifnull(a.fqdn, b.fqdn) as fqdn,",
             "ifnull(a.ip,b.ip) as ip,",
+            "ifnull(a.mac, b.mac) as mac",
             f"FROM (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) a",
             f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != {source_to_exclude}) b on a.hostname = b.hostname;"
         )
@@ -83,3 +84,19 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     )
     insert_assets(connection,_run_select_statement(connection,statement),table_name,table_header)
     
+def collate_from_source(connection:sqlite3.Connection, source:str):
+    table_name = f"collated_from_{source}"
+    table_header = ("name","fqdn","ip","mac")
+    drop_table(connection, table_name)
+    create_asset_table(connection, table_name, table_header)
+    statement = "\n".join((
+        f"INSERT INTO {table_name}",
+        "SELECT DISTINCT",
+        "ifnull(a.hostname, b.hostname) as name,",
+        "ifnull(a.fqdn, b.fqdn) as fqdn,",
+        "ifnull(a.ip,b.ip) as ip,",
+        "ifnull(a.mac,b.mac) as mac",
+        f"FROM (SELECT * FROM discovered_assets WHERE source = {source}) a",
+        f"LEFT OUTER JOIN (SELECT * FROM discovered_assets WHERE source != {source}) b ON a.hostname = b.hostname;"
+    ))
+    _run_statement(connection, statement)
