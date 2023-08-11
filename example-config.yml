@@ -1,22 +1,14 @@
 ---
+audit:
+ primary datasource: <specify the data source that is the primary target of this audit>
+
 data sources: 
-- Active Directory
-- Azure Active Directory
-- DHCP
-- DNS
-- Elastic Security
-- Malwarebytes
-- Manage Engine
-- Meraki
-- RunZero
-- Snipe-IT
-- Tenable
+- <enumerate data sources to query, collate and report on>
 
 database: 
  path: database/assets.db
- retention period: 3
- retention units: Months
-
+ retention days: 90
+ 
 Malwarebytes:
  client id: <client id>
  client secret: <client secret>
