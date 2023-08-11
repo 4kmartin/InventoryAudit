@@ -8,14 +8,16 @@ def report_new_assets (connection:Connection) -> list[tuple]:
     statement = f"SELECT hostname,fqdn,ip,mac FROM discovered_assets WHERE datefound = {today} EXCEPT SELECT hostname,fqdn,ip,mac FROM discovered_assets WHERE datefound < {today}"
     return _run_select_statement(connection, statement)
 
-def report_discrepencies (connection:Connection, data_sources:list[str]) -> list[tuple]:
-    unique = []
+def report_discrepencies (connection:Connection, data_sources:list[str]) -> dict[str,list[tuple]]:
+    unique = {}
     for source in data_sources:
-        unique += report_unique_to(connection, source)
+        unique += {source : report_unique_to(connection, source)}
     return unique
 
 def report_unique_to(connection:Connection, source:str) -> list[tuple]:
-    statement = f"SELECT hostname, fqdn, ip, mac FROM discovered_assets WHERE source = '{source}' EXCEPT SELECT hostname,fqdn,ip,mac FROM discovered_assets WHERE source != '{source}'"
+    collate_data(connection, source)
+    collate_from_source(connection, source)
+    statement = f"SELECT name, fqdn, ip, mac FROM collated_from_{source} EXCEPT SELECT name,fqdn,ip,mac FROM collated_assets;"
     return _run_select_statement(connection, statement)
 
 def write_report_to_file (report_name:str,query_output:list[tuple],description:str=""):
