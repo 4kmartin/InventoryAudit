@@ -35,6 +35,7 @@ if __name__ == '__main__':
 	CONFIG = open_config()
 
 	# compile List of Assets
+	print("Gathering Data")
 	assets = [] 
 	
 	for source in CONFIG["data sources"]:
@@ -78,6 +79,7 @@ if __name__ == '__main__':
 	 			print(f"{source} has not yet been implimented")
 
 	#insert list into DB
+	print("Saving Data")
 	db = connect(get_db_path())
 	insert_assets(
 		db,
@@ -85,6 +87,7 @@ if __name__ == '__main__':
 	)
 
 	# run reports
+	print ("Running Reports")
 
 	from python.reports import report_discrepencies, report_new_assets, write_report_to_file, report_not_in_source, report_compare_two_sources
 
@@ -96,4 +99,4 @@ if __name__ == '__main__':
 	write_report_to_file("PrimaryDelta",devices_not_in_primary)
 
 	for k,v in devices_unique_to_datasource.items():
-		write_report_to_file(f"Unique to {k}", v)
+		write_report_to_file(f"Unique to {k}".replace(" ",""), v)
