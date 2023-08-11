@@ -91,9 +91,13 @@ if __name__ == '__main__':
 
 	from python.reports import report_discrepencies, report_new_assets, write_report_to_file, report_not_in_source, report_compare_two_sources
 
+	print("\t reporting new devices")
 	devices_discoverd_this_scan = report_new_assets(db)
+	print("\tdone\n\tReporting devices that are only in one data source")
 	devices_unique_to_datasource = report_discrepencies(db, CONFIG["data sources"])
+	print(f"\tdone\n\tReporting devices not in {CONFIG['audit']['primary data source']}")
 	devices_not_in_primary = report_not_in_source(db, CONFIG["audit"]["primary data source"])
+	print("\tdone\n\n\tWriting reports to file")
 
 	write_report_to_file("NewAssets",devices_discoverd_this_scan)
 	write_report_to_file("PrimaryDelta",devices_not_in_primary)
