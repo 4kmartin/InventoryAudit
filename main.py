@@ -1,4 +1,3 @@
-from python.reports import report_discrepencies, report_new_assets, write_report_to_file
 from os.path import isfile, join
 from os import name as os_name
 import yaml
@@ -86,18 +85,15 @@ if __name__ == '__main__':
 	)
 
 	# run reports
-	# print(report_new_assets(db))
-	new = report_new_assets(db)
-	# print(report_discrepencies(db, CONFIG["data sources"]))
-	discrepencies = report_discrepencies(db, CONFIG["data sources"])
-	
-	write_report_to_file(
-		"New Assets", 
-		new, 
-		f"The following Report Details assets that have only appeared in the last month when compared to the retention duration of {CONFIG['database']['retention period']} {CONFIG['database']['retention units']}")
 
-	write_report_to_file(
-		"Assets Not Found in all Databases", 
-		discrepencies,
-		f"The Following Report Details Assets that appear in at least one, but not all data sources"
-	)
+	from python.reports import report_discrepencies, report_new_assets, write_report_to_file, report_not_in_source, report_compare_two_sources
+
+	devices_discoverd_this_scan = report_new_assets(db)
+	devices_unique_to_datasource = report_discrepencies(db, CONFIG["data sources"])
+    devices_not_in_primary = report_not_in_source(db, CONFIG["audit"]["primary data source"])
+
+	write_report_to_file("NewAssets",devices_discoverd_this_scan)
+	write_report_to_file("PrimaryDelta",devices_not_in_primary)
+
+	for k,v in devices_unique_to_datasource.items():
+		write_report_to_file(f"Unique to {k}", v)
