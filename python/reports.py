@@ -12,7 +12,7 @@ def report_discrepencies (connection:Connection, data_sources:list[str]) -> dict
     unique = {}
     for source in data_sources:
         print(f"\t\t{source}")
-        unique += {source : report_unique_to(connection, source)}
+        unique.update({source : report_unique_to(connection, source)})
         print("\t\tdone")
     return unique
 
