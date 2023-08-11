@@ -72,7 +72,7 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     
 def collate_from_source(connection:sqlite3.Connection, source:str):
     print(f"\t\t\tColating assets found in {source}")
-    table_name = f"collated_from_{source.replace(' ', '_')}"
+    table_name = f"collated_from_{sanatize(source)}"
     table_header = ("name","fqdn","ip","mac")
     drop_table(connection, table_name)
     create_asset_table(connection, table_name, table_header)
@@ -87,3 +87,6 @@ def collate_from_source(connection:sqlite3.Connection, source:str):
     ))
     insert_assets(connection, _run_select_statement(connection, statement), table_name, table_header)
     print("\t\t\tdone")
+
+def sanatize(string:str) -> str:
+    return string.lower().replace(" ", "").replace("-","").replace("'","").replace("\"","")

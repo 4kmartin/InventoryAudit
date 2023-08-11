@@ -1,5 +1,5 @@
 from datetime import date
-from python.dbMaintainance import _run_select_statement, collate_data, collate_from_source
+from python.dbMaintainance import _run_select_statement, collate_data, collate_from_source, sanatize
 from sqlite3 import Connection
 from os.path import join
 
@@ -19,7 +19,7 @@ def report_discrepencies (connection:Connection, data_sources:list[str]) -> dict
 def report_unique_to(connection:Connection, source:str) -> list[tuple]:
     collate_data(connection, source)
     collate_from_source(connection, source)
-    statement = f"SELECT name, fqdn, ip, mac FROM collated_from_{source.replace(' ', '_')} EXCEPT SELECT name,fqdn,ip,mac FROM collated_assets;"
+    statement = f"SELECT name, fqdn, ip, mac FROM collated_from_{sanatize(source)} EXCEPT SELECT name,fqdn,ip,mac FROM collated_assets;"
     return _run_select_statement(connection, statement)
 
 def write_report_to_file (report_name:str,query_output:list[tuple],description:str=""):
@@ -35,14 +35,14 @@ def write_report_to_file (report_name:str,query_output:list[tuple],description:s
 def report_not_in_source (connection:Connection, source:str) -> list[tuple]:
     collate_data(connection,source)
     collate_from_source(connection,source)
-    statement = f"SELECT name FROM collated_assets WHERE name NOT IN collated_from_{source.replace(' ','_')};"
+    statement = f"SELECT name FROM collated_assets WHERE name NOT IN collated_from_{sanatize(source)};"
     return _run_select_statement(statement)
 
 def report_compare_two_sources (connection:Connection, source_1:str, source_2:str) -> dict[str,list[tuple]]:
     collate_from_source(connection,source_1)
     collate_from_source(connection, source_2)
-    not_in_1 = f"SELECT name FROM collated_from_{source_2.replace(' ', '_')} WHERE name NOT IN collated_from_{source_1.replace(' ','_')};"
-    not_in_2 = f"SELECT name FROM collated_from_{source_1.replace(' ', '_')} WHERE name NOT IN collated_from_{source_2.replace(' ','_')};"
+    not_in_1 = f"SELECT name FROM collated_from_{sanatize(source_1)} WHERE name NOT IN collated_from_{sanatize(source_2)};"
+    not_in_2 = f"SELECT name FROM collated_from_{sanatize(source_2)} WHERE name NOT IN collated_from_{sanatize(source_1)};"
     return {
         f"not in {source_1}": _run_select_statement(connection,not_in_1),
         f"not in {source_2}": _run_select_statement(connection,not_in_2)
