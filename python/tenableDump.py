@@ -11,7 +11,7 @@ class TenableAsset (Asset):
         self.ip = ip_addr
 
     def to_tuple(self) ->tuple[str,int,str,str,str,str]:
-        return ("tenable.io", date.today().toordinal(), self.name, self.fqdn, self.ip, self.mac)
+        return ("Tenable", date.today().toordinal(), self.name, self.fqdn, self.ip, self.mac)
         
 
 def get_tenable_assets (access_key:str, secret_key:str) -> list[dict]:
