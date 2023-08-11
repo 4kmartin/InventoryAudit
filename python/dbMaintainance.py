@@ -46,7 +46,7 @@ def cull_asset_table (connection:sqlite3.Connection,retention_days:int) -> None:
 
 def insert_assets(connection:sqlite3.Connection, assets:list[tuple], table_name:str="discovered_assets", table_header:tuple[str]=("source","datefound","hostname","fqdn","ip","mac")) -> None:
     # map(lambda x: print(x), assets)
-    connection.cursor().executemany(f"INSERT INTO {table_name} ({', '.join(table_header)}) VALUES(?, ?, ?, ?, ?, ?);", assets)
+    connection.cursor().executemany(f"INSERT INTO {table_name} ({', '.join(table_header)}) VALUES({'?, ' * (len(table_header) - 1) + '?'});", assets)
     connection.commit()
 
 def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
@@ -56,7 +56,6 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     table_header = ("name", "fqdn", "ip", "mac")
     statement = "\n".join(
         (
-            f"INSERT INTO {table_name}"
             "SELECT DISTINCT",
             "ifnull(a.hostname, b.hostname) as name,",
             "ifnull(a.fqdn, b.fqdn) as fqdn,",
@@ -68,7 +67,7 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     )
     drop_table(connection, table_name)
     create_asset_table(connection, table_name, table_header)
-    _run_statement(connection, statement)
+    insert_assets(connection, _run_select_statement(connection, statement),table_name,table_header)
     print("\t\t\tdone")
     
 def collate_from_source(connection:sqlite3.Connection, source:str):
@@ -78,7 +77,6 @@ def collate_from_source(connection:sqlite3.Connection, source:str):
     drop_table(connection, table_name)
     create_asset_table(connection, table_name, table_header)
     statement = "\n".join((
-        f"INSERT INTO {table_name}",
         "SELECT DISTINCT",
         "ifnull(a.hostname, b.hostname) as name,",
         "ifnull(a.fqdn, b.fqdn) as fqdn,",
@@ -87,5 +85,5 @@ def collate_from_source(connection:sqlite3.Connection, source:str):
         f"FROM (SELECT * FROM discovered_assets WHERE source = '{source}') a",
         f"LEFT OUTER JOIN (SELECT * FROM discovered_assets WHERE source != '{source}') b ON a.hostname = b.hostname;"
     ))
-    _run_statement(connection, statement)
+    insert_assets(connection, _run_select_statement(connection, statement), table_name, table_header)
     print("\t\t\tdone")
