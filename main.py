@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
 	devices_discoverd_this_scan = report_new_assets(db)
 	devices_unique_to_datasource = report_discrepencies(db, CONFIG["data sources"])
-    devices_not_in_primary = report_not_in_source(db, CONFIG["audit"]["primary data source"])
+	devices_not_in_primary = report_not_in_source(db, CONFIG["audit"]["primary data source"])
 
 	write_report_to_file("NewAssets",devices_discoverd_this_scan)
 	write_report_to_file("PrimaryDelta",devices_not_in_primary)
