@@ -35,7 +35,7 @@ def write_report_to_file (report_name:str,query_output:list[tuple],description:s
 def report_not_in_source (connection:Connection, source:str) -> list[tuple]:
     collate_data(connection,source)
     collate_from_source(connection,source)
-    statement = f"SELECT name FROM collated_assets WHERE name NOT IN collated_from_{sanatize(source)};"
+    statement = f"SELECT name, fqdn, ip, mac FROM collated_assets WHERE name NOT IN (SELECT name FROM collated_from_{sanatize(source)});"
     return _run_select_statement(connection, statement)
 
 def report_compare_two_sources (connection:Connection, source_1:str, source_2:str) -> dict[str,list[tuple]]:
