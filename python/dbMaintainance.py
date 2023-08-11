@@ -51,40 +51,28 @@ def insert_assets(connection:sqlite3.Connection, assets:list[tuple], table_name:
 
 def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     """Colates all the duplicate data into single assets on a seperate table, optionally you can ignore data provided by a specific source"""
+    print("\t\t\tCollating all assets")
     table_name = "collated_assets"
     table_header = ("name", "fqdn", "ip", "mac")
-    statement = "\n".join(("SELECT DISTINCT",
-        "ifnull(a.hostname, b.hostname) as name,",
-        "ifnull(a.fqdn, b.fqdn) as fqdn,",
-        "ifnull(a.ip, b.ip) as ip,",
-        "ifnull(a.mac, b.mac) as mac",
-        f"FROM (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}') a",
-        f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}') b on a.mac = b.mac;"
-    ))
-    drop_table(connection, table_name)
-    create_asset_table(connection, table_name, table_header)
-    insert_assets(connection, _run_select_statement(connection,statement),table_name,table_header)
-    matching_name = "\n".join(
+    statement = "\n".join(
         (
+            f"INSERT INTO {table_name}"
             "SELECT DISTINCT",
             "ifnull(a.hostname, b.hostname) as name,",
             "ifnull(a.fqdn, b.fqdn) as fqdn,",
-            "ifnull(a.ip,b.ip) as ip,",
+            "ifnull(a.ip, b.ip) as ip,",
             "ifnull(a.mac, b.mac) as mac",
-            f"FROM (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}') a",
-            f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}') b on a.hostname = b.hostname;"
+            f"FROM (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}' AND mac != '') a",
+            f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}' AND mac != '') b on a.mac = b.mac;"
         )
     )
-    statement = "\n".join(
-        (
-            "SELECT *",
-            f"FROM (\n{matching_name})",
-            f"WHERE name NOT IN (SELECT name FROM {table_name});"
-        )
-    )
-    insert_assets(connection,_run_select_statement(connection,statement),table_name,table_header)
+    drop_table(connection, table_name)
+    create_asset_table(connection, table_name, table_header)
+    _run_statement(statement)
+    print("\t\t\tdone")
     
 def collate_from_source(connection:sqlite3.Connection, source:str):
+    print(f"\t\t\tColating assets found in {source}")
     table_name = f"collated_from_{source.replace(' ', '_')}"
     table_header = ("name","fqdn","ip","mac")
     drop_table(connection, table_name)
@@ -100,3 +88,4 @@ def collate_from_source(connection:sqlite3.Connection, source:str):
         f"LEFT OUTER JOIN (SELECT * FROM discovered_assets WHERE source != '{source}') b ON a.hostname = b.hostname;"
     ))
     _run_statement(connection, statement)
+    print("\t\t\tdone")
