@@ -68,7 +68,7 @@ def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
     )
     drop_table(connection, table_name)
     create_asset_table(connection, table_name, table_header)
-    _run_statement(statement)
+    _run_statement(connection, statement)
     print("\t\t\tdone")
     
 def collate_from_source(connection:sqlite3.Connection, source:str):
