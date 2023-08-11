@@ -11,7 +11,9 @@ def report_new_assets (connection:Connection) -> list[tuple]:
 def report_discrepencies (connection:Connection, data_sources:list[str]) -> dict[str,list[tuple]]:
     unique = {}
     for source in data_sources:
+        print(f"\t\t{source}")
         unique += {source : report_unique_to(connection, source)}
+        print("\t\tdone")
     return unique
 
 def report_unique_to(connection:Connection, source:str) -> list[tuple]:
