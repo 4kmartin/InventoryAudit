@@ -5,21 +5,30 @@ from datetime import date
 
 class ADAsset(Asset):
 
-	def __init__ (self, hostname, fqdn):
+	def __init__ (self, hostname:str, fqdn:str):
 		self.hostname = hostname
 		self.fqdn = fqdn
 
-	def to_tuple (self) -> (str, int, str, str, str, str):
+	def to_tuple (self) -> tuple[str, int, str, str, str, str]:
 		return ("Active Directory", date.today().toordinal(), self.hostname, self.fqdn, "", "")
 
 
 class DNSAsset(Asset):
-	def __init__ (self, hostname, ipaddress):
+	def __init__ (self, hostname:str, ipaddress:str):
 		self.hostname = hostname
 		self.ip = ipaddress
 
 	def to_tuple(self) -> tuple[str, int, str, str, str, str]:
 		return ("DNS", date.today().toordinal(),self.hostname,"",self.ip,"")
+
+
+class DHCPAsset (Asset):
+	def __init__ (self, hostname:str, ipaddress:str):
+		self.hostname = hostname
+		self.ip = ipaddress
+
+	def to_tuple (self) -> tuple[str, int, str, str, str, str]:
+		return ("DHCP", date.today().toordinal(), self.hostname, "", self.ip, "")
 
 		
 def run_powershell_script(path_to_script:str, *arguments) :
@@ -50,3 +59,20 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 			ip = asset.split(",")[1]
 			dnsassets.append(DNSAsset(name, ip))
 	return dnsassets
+
+def get_dhcp_dump (server:str, output_file:str) -> list[DHCPAsset]:
+	dhcpassets = []
+	run_powershell_script("powershell\/Get-DHCPDump.ps1", server, output_file)
+	with open(output_file) as out:
+		assets = out.readlines()
+		out.close()
+		for asset in assets[2:]:
+			name = asset(",")[0]
+			ip = asset(",")[1]
+			dhcpassets.append(
+				DHCPAsset(
+					name,
+					ip
+				)
+			)
+	return dhcpassets
