@@ -27,3 +27,6 @@ DNS:
 Snipe-IT:
  url: <url>
  personal access token: <token>
+
+DHCP:
+ server: <server>

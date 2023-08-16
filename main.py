@@ -75,6 +75,13 @@ if __name__ == '__main__':
 			case "Snipe-IT":
 				from python.snipeITDump import get_all_asset_names
 				assets += get_all_asset_names(CONFIG["Snipe-IT"]["url"],CONFIG["Snipe-IT"]["personal access token"])
+			case "DHCP":
+				from python.powershell import get_dhcp_dump
+				dhcp = CONFIG["DHCP"]
+				assets += get_dhcp_dump(
+					dhcp["server"],
+					join("csv","DHCPOut.csv")
+				)
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
