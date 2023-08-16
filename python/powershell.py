@@ -67,8 +67,8 @@ def get_dhcp_dump (server:str, output_file:str) -> list[DHCPAsset]:
 		assets = out.readlines()
 		out.close()
 		for asset in assets[2:]:
-			name = asset(",")[0]
-			ip = asset(",")[1]
+			name = asset.split(",")[0]
+			ip = asset.split(",")[1]
 			dhcpassets.append(
 				DHCPAsset(
 					name,
