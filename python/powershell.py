@@ -5,34 +5,26 @@ from datetime import date
 
 class ADAsset(Asset):
 
-	def __init__ (self, hostname:str, fqdn:str):
-		self.hostname = hostname
-		self.fqdn = fqdn
-
-	def to_tuple (self) -> tuple[str, int, str, str, str, str]:
-		return ("Active Directory", date.today().toordinal(), self.hostname, self.fqdn, "", "")
+	def __init__ (self, hostname:str, fqdn:str) -> None:
+		Asset.__init__(self,"Active Directory",hostname,fqdn,None,None)
 
 
 class DNSAsset(Asset):
-	def __init__ (self, hostname:str, ipaddress:str):
-		self.hostname = hostname
-		self.ip = ipaddress
-
-	def to_tuple(self) -> tuple[str, int, str, str, str, str]:
-		return ("DNS", date.today().toordinal(),self.hostname,"",self.ip,"")
+	def __init__ (self, hostname:str, ipaddress:str) -> None:
+		Asset.__init__(self, "DNS", hostname, None, ipaddress, None)
+	
+	def set_fqdn (self, fqdn:str) -> None:
+		self.fqdn = fqdn
 
 
 class DHCPAsset (Asset):
 	def __init__ (self, hostname:str, ipaddress:str):
-		self.hostname = hostname
-		self.ip = ipaddress
-
-	def to_tuple (self) -> tuple[str, int, str, str, str, str]:
-		return ("DHCP", date.today().toordinal(), self.hostname, "", self.ip, "")
+		Asset.__init__(self, "DHCP", hostname, None, ipaddress, None)
 
 		
 def run_powershell_script(path_to_script:str, *arguments) :
 	subprocess.Popen(["powershell","-NoProfile", path_to_script] + list(arguments), stdout=sys.stdout).communicate()
+
 
 def get_ad_computers_dump(output_file_path:str)->list[ADAsset]:
 	adassets =[]
@@ -57,7 +49,10 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 		for asset in assets[2:]:
 			name = asset.split(",")[0]
 			ip = asset.split(",")[1]
-			dnsassets.append(DNSAsset(name, ip))
+			if dnsassets[-1].ip == ip:
+				dnsassets[-1].set_fqdn(name)
+			else:
+				dnsassets.append(DNSAsset(name, ip))
 	return dnsassets
 
 def get_dhcp_dump (server:str, output_file:str) -> list[DHCPAsset]:
