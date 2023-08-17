@@ -1,16 +1,11 @@
 from requests import get, Response
 from python.asset import Asset
-from datetime import date
-
+from typing import Optional
 
 class SnipeItAsset (Asset):
 
-    def __init__(self, name, mac):
-        self.hostname = name
-        self.mac = mac
-
-    def to_tuple(self) -> tuple[str,int,str,str,str,str]:
-        return ("Snipe-IT", date.today().toordinal(), self.hostname, "", "", self.mac)
+    def __init__(self, hostname:Optional[str], mac:Optional[str]) -> None:
+        Asset.__init__(self, "Snipe-IT", hostname, None, None, mac)
 
 
 def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[SnipeItAsset]:
@@ -27,21 +22,22 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
     offset = 0
     response = _paginated_get_req(url,headers,100, offset)
 
-    while response.json()["total"] > offset + 100:
+    while response.json()["total"] > offset:
         for asset in response.json()["rows"]:
-            name = asset["name"]
+            name = asset["name"] if asset["name"] != "" else None
             try:
                 wifi_mac = asset["custom_fields"]["Wifi MAC address"]["value"]
                 eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
-                mac = wifi_mac if wifi_mac != "" else eth_mac
+                mac = wifi_mac if wifi_mac != "" else eth_mac if eth_mac != "" else None
             except KeyError:
-                mac = ""
-            assets.append(
-                SnipeItAsset(
-                    name,
-                    mac
+                mac = None
+            if not (name is None and mac is None):
+                assets.append(
+                    SnipeItAsset(
+                        name,
+                        mac
+                    )
                 )
-            )
         offset += 100
     return assets
 

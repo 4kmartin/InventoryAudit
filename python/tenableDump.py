@@ -4,15 +4,9 @@ from python.asset import Asset
 
 class TenableAsset (Asset):
 
-    def __init__(self, host_name:str, fqdn:str, mac_addr:str, ip_addr:str):
-        self.name = host_name
-        self.fqdn = fqdn
-        self.mac = mac_addr
-        self.ip = ip_addr
-
-    def to_tuple(self) ->tuple[str,int,str,str,str,str]:
-        return ("Tenable", date.today().toordinal(), self.name, self.fqdn, self.ip, self.mac)
-        
+    def __init__(self, host_name:str, fqdn:str, mac_addr:str, ip_addr:str) -> None:
+        Asset.__init__(self, "Tenable", host_name, fqdn, ip_addr, mac_addr)
+      
 
 def get_tenable_assets (access_key:str, secret_key:str) -> list[dict]:
     tio = TenableIO(access_key,secret_key)
