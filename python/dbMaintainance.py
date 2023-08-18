@@ -31,62 +31,31 @@ def connect(db_file:str) -> sqlite3.Connection:
         print(e)
         quit(1)
 
-def drop_table (connection:sqlite3.Connection, table_name:str):
+def drop_table (connection:sqlite3.Connection, table_name:str) -> None:
     statement = f"DROP TABLE IF EXISTS {table_name};"
     _run_statement(connection, statement)
 
-def create_asset_table (connection:sqlite3.Connection, table_name:str = "discovered_assets", table_header:tuple[str]=("source", "datefound", "hostname","fqdn","ip","mac")) ->None:
+def create_asset_table (connection:sqlite3.Connection, table_name:str = "discovered_assets", table_header:tuple[str]=("source", "datefound", "hostname","fqdn","ip","mac")) -> None:
     statement = f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(table_header)});"
     _run_statement(connection,statement)
 
-def cull_asset_table (connection:sqlite3.Connection,retention_days:int) -> None:
+def migrate_to_historical_data (connection:sqlite3.Connection) -> None:
+    create_asset_table(connection, "historical_data")
+    statement = "SELECT * FROM discovered_assets"
+    result = _run_select_statement(connection,statement)
+    insert_assets(connection, result, "historical_data")
+    drop_table(connection, "discovered_assets")
+    create_asset_table(connection)
+    
+def cull_historical_data_table (connection:sqlite3.Connection,retention_days:int) -> None:
     target_date = (date.today() - timedelta(days=retention_days)).toordinal()
-    statement = f"DELETE FROM discovered_assets WHERE date_found < {target_date}"
+    statement = f"DELETE FROM historical_data WHERE date_found < {target_date}"
     _run_statement(connection,statement)
 
-def insert_assets(connection:sqlite3.Connection, assets:list[tuple], table_name:str="discovered_assets", table_header:tuple[str]=("source","datefound","hostname","fqdn","ip","mac")) -> None:
-    # map(lambda x: print(x), assets)
-    connection.cursor().executemany(f"INSERT INTO {table_name} ({', '.join(table_header)}) VALUES({'?, ' * (len(table_header) - 1) + '?'});", assets)
-    connection.commit()
-
-def collate_data (connection:sqlite3.Connection, source_to_exclude:str = ""):
-    """Colates all the duplicate data into single assets on a seperate table, optionally you can ignore data provided by a specific source"""
-    print("\t\t\tCollating all assets")
-    table_name = "collated_assets"
-    table_header = ("name", "fqdn", "ip", "mac")
-    statement = "\n".join(
-        (
-            "SELECT DISTINCT",
-            "ifnull(a.hostname, b.hostname) as name,",
-            "ifnull(a.fqdn, b.fqdn) as fqdn,",
-            "ifnull(a.ip, b.ip) as ip,",
-            "ifnull(a.mac, b.mac) as mac",
-            f"FROM (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}' AND mac != '') a",
-            f"INNER JOIN (SELECT * FROM discovered_assets WHERE source != '{source_to_exclude}' AND mac != '') b on a.mac = b.mac;"
-        )
-    )
-    drop_table(connection, table_name)
-    create_asset_table(connection, table_name, table_header)
-    insert_assets(connection, _run_select_statement(connection, statement),table_name,table_header)
-    print("\t\t\tdone")
-    
-def collate_from_source(connection:sqlite3.Connection, source:str):
-    print(f"\t\t\tColating assets found in {source}")
-    table_name = f"collated_from_{sanatize(source)}"
-    table_header = ("name","fqdn","ip","mac")
-    drop_table(connection, table_name)
-    create_asset_table(connection, table_name, table_header)
-    statement = "\n".join((
-        "SELECT DISTINCT",
-        "ifnull(a.hostname, b.hostname) as name,",
-        "ifnull(a.fqdn, b.fqdn) as fqdn,",
-        "ifnull(a.ip,b.ip) as ip,",
-        "ifnull(a.mac,b.mac) as mac",
-        f"FROM (SELECT * FROM discovered_assets WHERE source = '{source}') a",
-        f"LEFT OUTER JOIN (SELECT * FROM discovered_assets WHERE source != '{source}') b ON a.hostname = b.hostname;"
-    ))
-    insert_assets(connection, _run_select_statement(connection, statement), table_name, table_header)
-    print("\t\t\tdone")
+def create_report_table (connection:sqlite3.Connection) -> None:
+    table_name = "reportable_data"
+    headers = ("sources TEXT NOT NULL", "datefound INTEGER NOT NULL", "hostname","fqdn","ip","mac","in_inventory INTEGER")
+    create_asset_table(connection, table_name, headers)
 
 def sanatize(string:str) -> str:
     return string.lower().replace(" ", "").replace("-","").replace("'","").replace("\"","")
