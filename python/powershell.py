@@ -1,7 +1,7 @@
 import subprocess
 import sys
 from python.asset import Asset
-from datetime import date
+
 
 class ADAsset(Asset):
 

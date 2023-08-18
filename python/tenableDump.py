@@ -1,5 +1,4 @@
 from tenable.io import TenableIO
-from datetime import date
 from python.asset import Asset
 
 class TenableAsset (Asset):
@@ -19,20 +18,20 @@ def filter_data (asset_list:list[dict]) ->list[TenableAsset]:
         try:
             host_name = asset["hostname"][-1]
         except IndexError:
-            host_name = ""
+            host_name = None
         try:
             fqdn = asset["fqdn"][-1]
         except IndexError:
-            fqdn = ""
+            fqdn = None
         try:
             mac_addr = asset["mac_address"][-1]
         except IndexError:
-            mac_addr = ""
+            mac_addr = None
         try:
             ip_addr = asset["ipv4"][-1]
         except IndexError:
-            ip_addr = ""
-        if (host_name,fqdn,mac_addr,ip_addr) == ("","","",""):
+            ip_addr = None
+        if (host_name,fqdn,mac_addr,ip_addr) == (None, None, None, None):
             continue
         out.append(TenableAsset(host_name,fqdn,mac_addr,ip_addr))
     return out
