@@ -31,7 +31,7 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
                 mac = wifi_mac if wifi_mac != "" else eth_mac if eth_mac != "" else None
             except KeyError:
                 mac = None
-            if not (name is None and mac is None):
+            if not (name, mac) == (None, None):
                 assets.append(
                     SnipeItAsset(
                         name,
