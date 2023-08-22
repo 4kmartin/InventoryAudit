@@ -27,10 +27,13 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
             name = asset["name"] if asset["name"] != "" else None
             try:
                 wifi_mac = asset["custom_fields"]["Wifi MAC address"]["value"]
-                eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
-                mac = wifi_mac if wifi_mac != "" else eth_mac if eth_mac != "" else None
             except KeyError:
-                mac = None
+                wifi_mac = ""
+            try:
+                eth_mac = asset["custom_fields"]["Ethernet MAC address"]["value"]
+            except KeyError:
+                eth_mac = ""
+            mac = wifi_mac if wifi_mac != "" else eth_mac if eth_mac != "" else None
             if not (name, mac) == (None, None):
                 assets.append(
                     SnipeItAsset(
