@@ -18,9 +18,8 @@ class DNSAsset(Asset):
 
 
 class DHCPAsset (Asset):
-	def __init__ (self, fqdn:str, ipaddress:str):
-		hostname = fqdn.split(".")[0]
-		Asset.__init__(self, "DHCP", hostname, fqdn, ipaddress, None)
+	def __init__ (self, fqdn:str, ipaddress:str) -> None:
+		Asset.__init__(self, "DHCP", None, fqdn, ipaddress, None)
 
 		
 def run_powershell_script(path_to_script:str, *arguments) :
@@ -56,7 +55,8 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 		for asset in assets[3:]:
 			name = asset.split(",")[0]
 			ip = asset.split(",")[1]
-			if (dnsassets[-1].hostname, dnsassets[-1].ip) == (name.split(".")[0], ip):
+			if zone in hostname and ip == dnsassets[-1].ip:
+				print(f"adding fqdn: {hostname} to asset: {dnsassets[-1].hostname}")
 				dnsassets[-1].set_fqdn(name)
 			else:
 				dnsassets.append(DNSAsset(name, ip))

@@ -1,9 +1,10 @@
 from tenable.io import TenableIO
 from python.asset import Asset
+from typing import Optional
 
 class TenableAsset (Asset):
 
-    def __init__(self, host_name:str, fqdn:str, mac_addr:str, ip_addr:str) -> None:
+    def __init__(self, host_name:Optional[str], fqdn:Optional[str], mac_addr:Optional[str], ip_addr:Optional[str]) -> None:
         Asset.__init__(self, "Tenable", host_name, fqdn, ip_addr, mac_addr)
       
 
