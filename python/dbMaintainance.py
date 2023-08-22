@@ -5,7 +5,7 @@
 
 from sqlite3 import Error
 from datetime import date,timedelta
-from sqlite3 import Connnection, connect 
+from sqlite3 import Connection, connect 
 
 
 def _run_statement (connection:Connection,statement:str) -> None:
@@ -23,8 +23,8 @@ def _run_select_statement (connection:Connection, statement:str) -> tuple:
         print(e)
         quit(1)
         
-def insert_all (connection:Connnection, table:str, list_to_insert:list[tuple], columns:tupl[str]) -> None:
-    statement  = f"INSERT INTO {table} ({",".join(columns)}) VALUES ({'?' * len(columns)});"
+def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], columns:tuple[str]) -> None:
+    statement  = f"INSERT INTO {table} ({','.join(columns)}) VALUES ({'?' * len(columns)});"
     try:
         connection.cursor().executemany(statement,list_to_insert)
         connection.commit()
@@ -32,7 +32,7 @@ def insert_all (connection:Connnection, table:str, list_to_insert:list[tuple], c
         print(e)
         quit(1)
 
-def insert_select (connection:Connnection, table:str, select_statement:str, columns:tuple[str]) -> None:
+def insert_select (connection:Connection, table:str, select_statement:str, columns:tuple[str]) -> None:
     statement = f"INSERT INTO {table} ({','.join(coluumns)}) \n {select_statement}"
     try:
         connection.cursor().execute(statement)
@@ -78,7 +78,7 @@ def create_report_table (connection:Connection) -> None:
 def sanatize(string:str) -> str:
     return string.lower().replace(" ", "").replace("-","").replace("'","").replace("\"","")
 
-def update_report_item_single_item (connection:Connnection, field:str, value:tuple, row_id:int, table_name:str="reportable_data") -> None:
+def update_report_item_single_item (connection:Connection, field:str, value:tuple, row_id:int, table_name:str="reportable_data") -> None:
     statement = "\n".join(
         (
             f"UPDATE {table_name}",
@@ -112,15 +112,15 @@ def fill_nulls (connection:Connection) -> None:
         statement = s_find_nulls_for(field)
         assets = _run_select_statement(connection, statement)
         for (rowid, hostname, fqdn, ip, mac) in assets:
-            
+            pass        
             
         
 
     
-def fill_sources (connection:Connnnection) -> None:
+def fill_sources (connection:Connection) -> None:
     pass
 
-def fill_in_inventory (connection:Connnnection, primary_inventory:str) -> None:
+def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
     pass
 
 def populate_report_table (connection:Connection, primary_inventory:str) -> None:
