@@ -6,6 +6,7 @@
 from sqlite3 import Error
 from datetime import date,timedelta
 from sqlite3 import Connection, connect 
+from typing import Callable, Any
 
 
 def _run_statement (connection:Connection,statement:str) -> None:
@@ -72,13 +73,13 @@ def cull_historical_data_table (connection:Connection,retention_days:int) -> Non
 
 def create_report_table (connection:Connection) -> None:
     table_name = "reportable_data"
-    headers = ("sources", "hostname","fqdn","ip","mac","in_inventory INTEGER")
+    headers = ("source", "hostname","fqdn","ip","mac","in_inventory INTEGER")
     create_asset_table(connection, table_name, headers)
 
 def sanatize(string:str) -> str:
     return string.lower().replace(" ", "").replace("-","").replace("'","").replace("\"","")
 
-def update_report_item_single_item (connection:Connection, field:str, value:tuple, row_id:int, table_name:str="reportable_data") -> None:
+def update_report_item_single_item (connection:Connection, field:str, value:tuple, rowid:int, table_name:str="reportable_data") -> None:
     statement = "\n".join(
         (
             f"UPDATE {table_name}",
@@ -86,54 +87,41 @@ def update_report_item_single_item (connection:Connection, field:str, value:tupl
             "WHERE rowid = ?"
         )
     )
-    _run_statement(connection, statement)
+    connection.cursor().execute(statement,(value,rowid))
     connection.commit()
 
-def fill_nulls (connection:Connection) -> None:
-    def s_find_nulls_for(field:str) -> str:
-        return "\n".join(
-            (
-                "SELECT row_id, hostname, fqdn, ip, mac",
-                "FROM reportable_data",
-                f"WHERE {field} IS NULL"
-            )
-        )    
-
-    def s_find_matches (field:str, match_field_name:str, match_field_value:str):
-        return "\n". join(
-            (
-                f"SELECT {field}",
-                "FROM discovered_assets",
-                f"WHERE {field} NOT NULL",
-                f"AND {match_field_name} = {match_field_value}"
-            )
+def s_find_nulls_for(field:str) -> str:
+    return "\n".join(
+        (
+            "SELECT row_id, hostname, fqdn, ip, mac",
+            "FROM reportable_data",
+            f"WHERE {field} IS NULL"
         )
-    for field in ["hostname","fqdn","ip","mac"]:
-        statement = s_find_nulls_for(field)
-        assets = _run_select_statement(connection, statement)
-        for (rowid, hostname, fqdn, ip, mac) in assets:
-            lookup = {
-                "hostname":hostname,
-                "fqdn":fqdn,
-                "ip":ip,
-                "mac":mac
-            }
-            for (key, value) in lookup.items():
-                statement = s_find_matches(field, key, value)
-                matched_asset = connection.cursor().execute(statement).fetchone()
-                if matched_asset:
-                    update_report_item_single_item(connection,field,matched_asset[0],rowid)
-                    break
+    )    
 
-def fill_sources (connection:Connection) -> None:
-    pass
+def s_find_matches (field:str, match_field_name:str, match_field_value:str):
+    return "\n". join(
+        (
+            f"SELECT {field}",
+            "FROM discovered_assets",
+            f"WHERE {field} NOT NULL",
+            f"AND {match_field_name} = {match_field_value}"
+        )
+    )
 
-def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
-    pass
+def field_select(field:str, table_name, columns) -> str:
+    return "\n".join(
+        (
+            "SELECT DISTINCT",
+            ",".join(columns),
+            "FROM discovered_assets",
+            f"WHERE {field} NOT NULL",
+            f"AND {field} NOT IN {table_name}"
+        )
+    )
 
-def populate_report_table (connection:Connection, primary_inventory:str) -> None:
-    columns = ("hostname", "fqdn", "ip", "mac")
-    statement =  "\n".join(
+def s_completed_rows (columns:tuple[str]) -> str:
+    return "\n".join(
         (
             "SELECT DISTINCT",
             ",".join(columns),
@@ -144,20 +132,60 @@ def populate_report_table (connection:Connection, primary_inventory:str) -> None
             "mac NOT NULL"
         )
     )
+
+def iterate_list_of_assets_with_null_field (connection:Connection, function_to_call:Callable[[Connection,tuple[Any],str], None], asset_list:list[tuple[Any]], null_field:str) -> None:
+    for asset in asset_list:
+        function_to_call(connection, asset, null_field)
+
+def lookup_matching_values_then_update_null_fields (connection:Connection, asset:tuple[int, str, str, str, str], null_field:str) -> None:
+    (rowid, lookup) = map_lookup_to_values(asset)
+    for (key, value) in lookup.items():
+        statement = s_find_matches(null_field, key, value)
+        matched_asset = connection.cursor().execute(statement).fetchone()
+        if matched_asset:
+            update_report_item_single_item(connection,field,matched_asset[0],rowid)
+            break
+
+def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, table_name:str = "reportable_assets") -> None:
+    (rowid, lookup) = map_lookup_to_values(asset)
+    getter = f"SELECT {field} FROM {table_name} WHERE rowid = {rowid};"
+    field_value = _run_select_statement(connection,getter)[0]
+    for (key, value) in lookup.items():
+        statement = s_find_matches(field, key, value)
+        matched_assets = connection.cursor().execute(statement).fetchall()
+        map(lambda x: f"{field_value},{x[0]}", matched_assets)
+    update_report_item_single_item (connection, field, (field_value), rowid)
+        
+
+def map_lookup_to_values (asset:tuple[int,str,str,str,str]) -> tuple[int,dict[str,Any]]:
+    return (asset[0],
+        {
+            "hostname":asset[1],
+            "fqdn":asset[2],
+            "ip":asset[3],
+            "mac":asset[4]
+        }
+    )
+
+def fill_nulls (connection:Connection) -> None:    
+    for field in ["hostname","fqdn","ip","mac"]:
+        statement = s_find_nulls_for(field)
+        assets = _run_select_statement(connection, statement)
+        iterate_list_of_assets_with_null_field(connection, lookup_matching_values_then_update_null_fields,assets,field)
+
+def fill_source (connection:Connection) -> None:
+    statement = "SELECT rowid, hostname, fqdn, ip, mac FROM reportable_assets"
+    assets = _run_select_statement(connection, statement)
+    iterate_list_of_assets_with_null_field(append_data_to_field, assets, "source")
+
+def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
+    pass
+
+def populate_report_table (connection:Connection, primary_inventory:str) -> None:
+    columns = ("hostname", "fqdn", "ip", "mac")
+    statement =  s_completed_rows(columns)
     table_name = "reportable_data"
     insert_select(connection, table_name, statement, columns)
-
-    def field_select(field:str, table_name, columns) -> str:
-        return "\n".join(
-            (
-                "SELECT DISTINCT",
-                ",".join(columns),
-                "FROM discovered_assets",
-                f"WHERE {field} NOT NULL",
-                f"AND {field} NOT IN {table_name}"
-            )
-        )
-
     hostnames = field_select("hostname",table_name,columns)
     fqdns = field_select("fqdn",table_name,columns)
     ips = field_select("ip",table_name,columns)
@@ -166,5 +194,5 @@ def populate_report_table (connection:Connection, primary_inventory:str) -> None
     for statement in (hostnames,fqdns,ips,macs):
         insert_select(connection,table_name,statement,columns)
         fill_nulls(connection)
-    fill_sources(connection)
+    fill_source(connection)
     fill_in_inventory(connection,primary_inventory)
