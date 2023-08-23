@@ -37,6 +37,7 @@ def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], co
 
 def insert_select (connection:Connection, table:str, select_statement:str, columns:tuple[str]) -> None:
     statement = f"INSERT INTO {table} ({','.join(columns)}) \n {select_statement}"
+    print(statement)
     try:
         connection.cursor().execute(statement)
         connection.commit()
@@ -118,7 +119,7 @@ def field_select(field:str, table_name, columns) -> str:
             ",".join(columns),
             "FROM discovered_assets",
             f"WHERE {field} NOT NULL",
-            f"AND {field} NOT IN {table_name}"
+            f"AND {field} NOT IN (SELECT hostname FROM {table_name})"
         )
     )
 
@@ -184,9 +185,11 @@ def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
     pass
 
 def populate_report_table (connection:Connection, primary_inventory:str) -> None:
+    print("populating report table")
     columns = ("hostname", "fqdn", "ip", "mac")
     statement =  s_completed_rows(columns)
     table_name = "reportable_data"
+    print("inserting completed fields")
     insert_select(connection, table_name, statement, columns)
     hostnames = field_select("hostname",table_name,columns)
     fqdns = field_select("fqdn",table_name,columns)
@@ -194,7 +197,9 @@ def populate_report_table (connection:Connection, primary_inventory:str) -> None
     macs = field_select("mac",table_name,columns)
 
     for statement in (hostnames,fqdns,ips,macs):
+        print("getting incomplete fields")
         insert_select(connection,table_name,statement,columns)
+        print("filling nulls")
         fill_nulls(connection)
     fill_source(connection)
     fill_in_inventory(connection,primary_inventory)
