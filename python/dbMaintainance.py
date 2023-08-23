@@ -112,11 +112,19 @@ def fill_nulls (connection:Connection) -> None:
         statement = s_find_nulls_for(field)
         assets = _run_select_statement(connection, statement)
         for (rowid, hostname, fqdn, ip, mac) in assets:
-            pass        
-            
-        
+            lookup = {
+                "hostname":hostname,
+                "fqdn":fqdn,
+                "ip":ip,
+                "mac":mac
+            }
+            for (key, value) in lookup.items():
+                statement = s_find_matches(field, key, value)
+                matched_asset = connection.cursor().execute(statement).fetchone()
+                if matched_asset:
+                    update_report_item_single_item(connection,field,matched_asset[0],rowid)
+                    break
 
-    
 def fill_sources (connection:Connection) -> None:
     pass
 
