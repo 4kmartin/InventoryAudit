@@ -25,7 +25,9 @@ def _run_select_statement (connection:Connection, statement:str) -> tuple:
         quit(1)
         
 def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], columns:tuple[str]) -> None:
-    statement  = f"INSERT INTO {table} ({','.join(columns)}) VALUES ({'?' * len(columns)});"
+    statement  = f"INSERT INTO {table} ({','.join(columns)}) VALUES (?{', ?' * (len(columns)-1)});"
+    print(statement)
+    print(len(columns))
     try:
         connection.cursor().executemany(statement,list_to_insert)
         connection.commit()
@@ -34,7 +36,7 @@ def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], co
         quit(1)
 
 def insert_select (connection:Connection, table:str, select_statement:str, columns:tuple[str]) -> None:
-    statement = f"INSERT INTO {table} ({','.join(coluumns)}) \n {select_statement}"
+    statement = f"INSERT INTO {table} ({','.join(columns)}) \n {select_statement}"
     try:
         connection.cursor().execute(statement)
         connection.commit()
@@ -42,7 +44,7 @@ def insert_select (connection:Connection, table:str, select_statement:str, colum
         print(e)
         quit(1)
 
-def connect(db_file:str) -> Connection:
+def get_db_connection(db_file:str) -> Connection:
     """Create a connection to a SQLite database"""
     try:
         return connect(db_file)
