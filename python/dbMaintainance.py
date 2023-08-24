@@ -26,8 +26,6 @@ def _run_select_statement (connection:Connection, statement:str) -> tuple:
         
 def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], columns:tuple[str]) -> None:
     statement  = f"INSERT INTO {table} ({','.join(columns)}) VALUES (?{', ?' * (len(columns)-1)});"
-    print(statement)
-    print(len(columns))
     try:
         connection.cursor().executemany(statement,list_to_insert)
         connection.commit()
@@ -37,7 +35,6 @@ def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], co
 
 def insert_select (connection:Connection, table:str, select_statement:str, columns:tuple[str]) -> None:
     statement = f"INSERT INTO {table} ({','.join(columns)}) \n {select_statement}"
-    print(statement)
     try:
         connection.cursor().execute(statement)
         connection.commit()
@@ -137,18 +134,15 @@ def s_completed_rows (columns:tuple[str]) -> str:
     )
 
 def iterate_list_of_assets_with_null_field (connection:Connection, function_to_call:Callable[[Connection,tuple[Any],str], None], asset_list:list[tuple[Any]], null_field:str) -> None:
-    print(f"iterating through rows with a null value for {null_field}")
     for asset in asset_list:
         function_to_call(connection, asset, null_field)
 
 def lookup_matching_values_then_update_null_fields (connection:Connection, asset:tuple[int, str, str, str, str], null_field:str) -> None:
-    print(f"getting {null_field} for {asset[1] if asset[1] else asset[2] if asset[2] else asset[3]}")
     (rowid, lookup) = map_lookup_to_values(asset)
     for (key, value) in lookup.items():
         if not value:
             continue
         statement = s_find_matches(null_field, key, value)
-        print(statement)
         matched_asset = connection.cursor().execute(statement).fetchone()
         if matched_asset:
             update_report_item_single_item(connection,null_field,matched_asset[0],rowid)
@@ -193,14 +187,17 @@ def fill_source (connection:Connection) -> None:
     iterate_list_of_assets_with_null_field(connection, append_data_to_field, assets, "source")
 
 def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
-    pass
+    collected_scources = _run_select_statement(connection,"SELECT rowid, source FROM reportable_data")
+    for (rowid, sources) in collected_scources:
+        if primary_inventory in sources.split(","):
+            update_report_item_single_item(connection,"in_inventory", 1, rowid)
+        else:
+            update_report_item_single_item(connection,"in_inventory", 0, rowid)
 
 def populate_report_table (connection:Connection, primary_inventory:str) -> None:
-    print("populating report table")
     columns = ("hostname", "fqdn", "ip", "mac")
     statement =  s_completed_rows(columns)
     table_name = "reportable_data"
-    print("inserting completed fields")
     insert_select(connection, table_name, statement, columns)
     hostnames = field_select("hostname",table_name,columns)
     fqdns = field_select("fqdn",table_name,columns)
@@ -208,9 +205,7 @@ def populate_report_table (connection:Connection, primary_inventory:str) -> None
     macs = field_select("mac",table_name,columns)
 
     for statement in (hostnames,fqdns,ips,macs):
-        print("getting incomplete fields")
         insert_select(connection,table_name,statement,columns)
-        print("filling nulls")
         fill_nulls(connection)
     fill_source(connection)
     fill_in_inventory(connection,primary_inventory)
