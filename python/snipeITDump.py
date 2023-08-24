@@ -42,8 +42,9 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
                     )
                 )
         offset += 100
+        response = _paginated_get_req(url,headers,100,offset)
     return assets
 
 def _paginated_get_req (url:str, headers:dict[str,str],limit:int,offset:int) -> Response:
-    modified_url = "{url}?limit={limit}&offset={offset}&sort=id&order=asc"
-    return get(url, headers=headers)
+    modified_url = f"{url}?limit={limit}&offset={offset}&sort=id&order=asc"
+    return get(modified_url, headers=headers)
