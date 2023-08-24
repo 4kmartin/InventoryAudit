@@ -1,5 +1,7 @@
 from os.path import isfile, join
+from python.dbMaintainance import populate_report_table, get_db_connection, insert_all, create_report_table, create_asset_table, migrate_to_historical_data 
 from os import name as os_name
+from python.reports import report_not_found_in_company_asset_inventory
 import yaml
 
 def db_exists() -> bool:
@@ -14,8 +16,7 @@ def open_config() -> dict:
 		return yaml.load(f, Loader=yaml.FullLoader)
 	
 if __name__ == '__main__':
-	from python.dbMaintainance import connect, insert_assets
-
+	
 	#verify existance of config file
 	if not isfile("config.yml"):
 		print("could not find config.yml. please create this file and fill the neccessary fields")
@@ -23,11 +24,10 @@ if __name__ == '__main__':
 		
 	# Verify Database exists
 	if not db_exists():
-		from python.dbMaintainance import create_asset_table
 		path = get_db_path()
 		with open(path,"w") as fp:
 			pass
-		con = connect(path)
+		con = get_db_connection(path)
 		create_asset_table(con)
 		con.close()
 
@@ -76,38 +76,33 @@ if __name__ == '__main__':
 				from python.snipeITDump import get_all_asset_names
 				assets += get_all_asset_names(CONFIG["Snipe-IT"]["url"],CONFIG["Snipe-IT"]["personal access token"])
 			case "DHCP":
-				from python.powershell import get_dhcp_dump
-				dhcp = CONFIG["DHCP"]
-				assets += get_dhcp_dump(
-					dhcp["server"],
-					join("csv","DHCPOut.csv")
-				)
+				if os_name == "nt":
+					from python.powershell import get_dhcp_dump
+					dhcp = CONFIG["DHCP"]
+					assets += get_dhcp_dump(
+						dhcp["server"],
+						join("csv","DHCPOut.csv")
+					)
+
+				else:
+					print(f"cannot run {source} query on non Windows OS")
 			case _:
 	 			print(f"{source} has not yet been implimented")
 
 	#insert list into DB
 	print("Saving Data")
-	db = connect(get_db_path())
-	insert_assets(
+	db = get_db_connection(get_db_path())
+	migrate_to_historical_data(db)
+	insert_all(
 		db,
-		list(map(lambda x: x.to_tuple(),assets))
+		"discovered_assets",
+		list(map(lambda x: x.to_tuple(),assets)),
+		("source","datefound","hostname","fqdn","ip","mac")
 	)
-
+	
 	# run reports
-	print ("Running Reports")
+	create_report_table(db)
+	populate_report_table(db, CONFIG["audit"]["primary data source"])
 
-	from python.reports import report_discrepencies, report_new_assets, write_report_to_file, report_not_in_source, report_compare_two_sources
-
-	print("\t reporting new devices")
-	devices_discoverd_this_scan = report_new_assets(db)
-	print("\tdone\n\tReporting devices that are only in one data source")
-	devices_unique_to_datasource = report_discrepencies(db, CONFIG["data sources"])
-	print(f"\tdone\n\tReporting devices not in {CONFIG['audit']['primary data source']}")
-	devices_not_in_primary = report_not_in_source(db, CONFIG["audit"]["primary data source"])
-	print("\tdone\n\n\tWriting reports to file")
-
-	write_report_to_file("NewAssets",devices_discoverd_this_scan)
-	write_report_to_file("PrimaryDelta",devices_not_in_primary)
-
-	for k,v in devices_unique_to_datasource.items():
-		write_report_to_file(f"Unique to {k}".replace(" ",""), v)
+	report_not_found_in_company_asset_inventory(db)
+	
