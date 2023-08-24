@@ -152,7 +152,7 @@ def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, ta
     (rowid, lookup) = map_lookup_to_values(asset)
     getter = f"SELECT {field} FROM {table_name} WHERE rowid = {rowid};"
     current_value = _run_select_statement(connection,getter)[0][0]
-    field_value = [current_value.split(",")] if current_value else []
+    field_value = current_value.split(",") if current_value else []
     for (key, value) in lookup.items():
         statement = s_find_matches(field, key, value)
         matched_assets = connection.cursor().execute(statement).fetchall()
