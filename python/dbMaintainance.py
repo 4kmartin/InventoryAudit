@@ -25,7 +25,7 @@ def _run_select_statement (connection:Connection, statement:str) -> tuple:
         quit(1)
         
 def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], columns:tuple[str]) -> None:
-    statement  = f"INSERT INTO {table} ({','.join(columns)}) VALUES (?{', ?' * (len(columns)-1)});"
+    statement = f"INSERT INTO {table} ({','.join(columns)}) VALUES (?{', ?' * (len(columns)-1)});"
     try:
         connection.cursor().executemany(statement,list_to_insert)
         connection.commit()
@@ -34,7 +34,8 @@ def insert_all (connection:Connection, table:str, list_to_insert:list[tuple], co
         quit(1)
 
 def insert_select (connection:Connection, table:str, select_statement:str, columns:tuple[str]) -> None:
-    statement = f"INSERT INTO {table} ({','.join(columns)}) \n {select_statement}"
+    cols = f" ({','.join(columns)}) " if columns != () else " "
+    statement  = f"INSERT INTO {table}{cols}\n{select_statement}"
     try:
         connection.cursor().execute(statement)
         connection.commit()
@@ -61,8 +62,7 @@ def create_asset_table (connection:Connection, table_name:str = "discovered_asse
 def migrate_to_historical_data (connection:Connection) -> None:
     create_asset_table(connection, "historical_data")
     statement = "SELECT * FROM discovered_assets"
-    result = _run_select_statement(connection,statement)
-    insert_assets(connection, result, "historical_data")
+    insert_select(connection,"historical_data", statement, ())
     drop_table(connection, "discovered_assets")
     create_asset_table(connection)
     
@@ -152,7 +152,7 @@ def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, ta
     (rowid, lookup) = map_lookup_to_values(asset)
     getter = f"SELECT {field} FROM {table_name} WHERE rowid = {rowid};"
     current_value = _run_select_statement(connection,getter)[0][0]
-    field_value = [current_value] if current_value else []
+    field_value = [current_value.split(",")] if current_value else []
     for (key, value) in lookup.items():
         statement = s_find_matches(field, key, value)
         matched_assets = connection.cursor().execute(statement).fetchall()
@@ -161,7 +161,6 @@ def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, ta
         for matched_asset in matched_assets:
             if matched_asset[0] and matched_asset[0] not in field_value:
                 field_value.append(matched_asset[0])
-    print(field_value)
     update_report_item_single_item (connection, field, ",".join(field_value), rowid)
         
 

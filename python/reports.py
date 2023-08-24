@@ -7,7 +7,7 @@ from os.path import join
 def write_report_to_file (report_name:str,query_output:list[tuple],description:str=""):
     report = f"{description}\nHostname, Fully Qualified Domain Name, IPv4 Address, MAC Address\n"
     for asset in query_output:
-        report += ", ".join([i if i is not None else "" for i in asset])
+        report += ", ".join([str(i) if i else "" for i in asset])
         report += "\n"
     file = join("csv",f"{report_name}.csv")
     with open(file, "w") as report_file:
