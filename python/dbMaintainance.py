@@ -96,7 +96,7 @@ def update_report_item_single_item (connection:Connection, field:str, value:tupl
 def s_find_nulls_for(field:str) -> str:
     return "\n".join(
         (
-            "SELECT row_id, hostname, fqdn, ip, mac",
+            "SELECT rowid, hostname, fqdn, ip, mac",
             "FROM reportable_data",
             f"WHERE {field} IS NULL"
         )
@@ -108,7 +108,7 @@ def s_find_matches (field:str, match_field_name:str, match_field_value:str):
             f"SELECT {field}",
             "FROM discovered_assets",
             f"WHERE {field} NOT NULL",
-            f"AND {match_field_name} = {match_field_value}"
+            f"AND {match_field_name} = '{match_field_value}'"
         )
     )
 
@@ -137,27 +137,38 @@ def s_completed_rows (columns:tuple[str]) -> str:
     )
 
 def iterate_list_of_assets_with_null_field (connection:Connection, function_to_call:Callable[[Connection,tuple[Any],str], None], asset_list:list[tuple[Any]], null_field:str) -> None:
+    print(f"iterating through rows with a null value for {null_field}")
     for asset in asset_list:
         function_to_call(connection, asset, null_field)
 
 def lookup_matching_values_then_update_null_fields (connection:Connection, asset:tuple[int, str, str, str, str], null_field:str) -> None:
+    print(f"getting {null_field} for {asset[1] if asset[1] else asset[2] if asset[2] else asset[3]}")
     (rowid, lookup) = map_lookup_to_values(asset)
     for (key, value) in lookup.items():
+        if not value:
+            continue
         statement = s_find_matches(null_field, key, value)
+        print(statement)
         matched_asset = connection.cursor().execute(statement).fetchone()
         if matched_asset:
-            update_report_item_single_item(connection,field,matched_asset[0],rowid)
+            update_report_item_single_item(connection,null_field,matched_asset[0],rowid)
             break
 
-def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, table_name:str = "reportable_assets") -> None:
+def append_data_to_field (connection:Connection, asset:tuple[Any], field:str, table_name:str = "reportable_data") -> None:
     (rowid, lookup) = map_lookup_to_values(asset)
     getter = f"SELECT {field} FROM {table_name} WHERE rowid = {rowid};"
-    field_value = _run_select_statement(connection,getter)[0]
+    current_value = _run_select_statement(connection,getter)[0][0]
+    field_value = [current_value] if current_value else []
     for (key, value) in lookup.items():
         statement = s_find_matches(field, key, value)
         matched_assets = connection.cursor().execute(statement).fetchall()
-        map(lambda x: f"{field_value},{x[0]}", matched_assets)
-    update_report_item_single_item (connection, field, (field_value), rowid)
+        if not matched_assets:
+            continue
+        for matched_asset in matched_assets:
+            if matched_asset[0] and matched_asset[0] not in field_value:
+                field_value.append(matched_asset[0])
+    print(field_value)
+    update_report_item_single_item (connection, field, ",".join(field_value), rowid)
         
 
 def map_lookup_to_values (asset:tuple[int,str,str,str,str]) -> tuple[int,dict[str,Any]]:
@@ -177,9 +188,9 @@ def fill_nulls (connection:Connection) -> None:
         iterate_list_of_assets_with_null_field(connection, lookup_matching_values_then_update_null_fields,assets,field)
 
 def fill_source (connection:Connection) -> None:
-    statement = "SELECT rowid, hostname, fqdn, ip, mac FROM reportable_assets"
+    statement = "SELECT rowid, hostname, fqdn, ip, mac FROM reportable_data"
     assets = _run_select_statement(connection, statement)
-    iterate_list_of_assets_with_null_field(append_data_to_field, assets, "source")
+    iterate_list_of_assets_with_null_field(connection, append_data_to_field, assets, "source")
 
 def fill_in_inventory (connection:Connection, primary_inventory:str) -> None:
     pass
