@@ -1,6 +1,7 @@
 from os.path import isfile, join
-from python.dbMaintainance import get_db_connection, insert_all, create_report_table, create_asset_table, migrate_to_historical_data 
+from python.dbMaintainance import populate_report_table, get_db_connection, insert_all, create_report_table, create_asset_table, migrate_to_historical_data 
 from os import name as os_name
+from python.reports import report_not_found_in_company_asset_inventory
 import yaml
 
 def db_exists() -> bool:
@@ -91,6 +92,7 @@ if __name__ == '__main__':
 	#insert list into DB
 	print("Saving Data")
 	db = get_db_connection(get_db_path())
+	migrate_to_historical_data(db)
 	insert_all(
 		db,
 		"discovered_assets",
@@ -99,4 +101,8 @@ if __name__ == '__main__':
 	)
 	
 	# run reports
+	create_report_table(db)
+	populate_report_table(db, CONFIG["audit"]["primary data source"])
+
+	report_not_found_in_company_asset_inventory(db)
 	
