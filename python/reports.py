@@ -27,5 +27,7 @@ def report_has_company_antimalware (connection:Connection, antimalware_software:
     """requires antimalware be ingested as a datasource"""
     pass
 
-def report_not_found_in_company_asset_inventory (connection:Connection, asset_inventory_software:str) -> list[Asset]:
-    pass
+def report_not_found_in_company_asset_inventory (connection:Connection) -> list[Asset]:
+    statement = "SELECT * FROM reportable_data WHERE in_inventory = 0 AND hostname NOT NULL"
+    output = _run_select_statement(connection,statement)
+    write_report_to_file("NotInventoried",output,"THESE REPORTED DEVICES WERE FOUND IN THE DATABASE OF A SOFTWARE USED BY THE COMPANY BUT NOT IN THE INVENTORY")
