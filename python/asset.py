@@ -16,10 +16,12 @@ class Asset:
         return (self.source, self.date_discovered, self.hostname, self.fqdn, self.ip, self.mac)
 
     def __eq__(self, other_asset:Asset) -> bool:
-        hostname_eq = self.hostname == other_asset.hostname
-        source_eq = self.source == other_asset.source
-        fqdn_eq = self.fqdn == other_asset.fqdn
-        cross_eq = self.fqdn == other_asset.hostname or self.hostname == other_asset.fqdn
+        hostname_eq = self.hostname == other_asset.hostname and self.hostname not None
+        source_eq = self.source == other_asset.source and self.source not None
+        fqdn_eq = self.fqdn == other_asset.fqdn and self.fqdn not None
+        fn_hn_eq = self.fqdn not None and self.fqdn == other_asset.hostname
+        hn_fn_eq = self.hostname not None and self.hostname == other_asset.fqdn
+        cross_eq = fn_hn_eq or hn_fn_eq
         qualified_hn_eq = source_eq and hosstname_eq
         qualified_fn_eq  = source_eq and fqdn_eq
         qualified_cross = source_eq and cross_eq
