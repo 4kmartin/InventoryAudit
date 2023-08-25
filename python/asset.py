@@ -31,3 +31,6 @@ class Asset:
         all_eq = source_eq and hostname_eq and fqdn_eq and self.ip == other_asset.ip and self.mac == other_asset.mac
 
         return all_eq or qualified_cross or qualified_fn_eq or qualified_hn_eq
+
+    def __repr__(self) -> str:
+        return f"Asset; source:{self.source} date:{date.fromordinal(self.date_discovered)} hostname:{self.hostname} fqdn:{self.fqdn} ip:{self.ip} mac:{self.mac}"
