@@ -1,4 +1,5 @@
 from typing import Optional
+from typing_extensions import Self
 from datetime import date
 
 
@@ -15,12 +16,12 @@ class Asset:
     def to_tuple(self) -> tuple[str, int, Optional[str], Optional[str], Optional[str], Optional[str]]:
         return (self.source, self.date_discovered, self.hostname, self.fqdn, self.ip, self.mac)
 
-    def __eq__(self, other_asset:Asset) -> bool:
-        hostname_eq = self.hostname == other_asset.hostname and self.hostname not None
-        source_eq = self.source == other_asset.source and self.source not None
-        fqdn_eq = self.fqdn == other_asset.fqdn and self.fqdn not None
-        fn_hn_eq = self.fqdn not None and self.fqdn == other_asset.hostname
-        hn_fn_eq = self.hostname not None and self.hostname == other_asset.fqdn
+    def __eq__(self, other_asset:Self) -> bool:
+        hostname_eq = self.hostname == other_asset.hostname and self.hostname is not None
+        source_eq = self.source == other_asset.source and self.source is not None
+        fqdn_eq = self.fqdn == other_asset.fqdn and self.fqdn is not None
+        fn_hn_eq = self.fqdn is not None and self.fqdn == other_asset.hostname
+        hn_fn_eq = self.hostname is not None and self.hostname == other_asset.fqdn
         cross_eq = fn_hn_eq or hn_fn_eq
         qualified_hn_eq = source_eq and hosstname_eq
         qualified_fn_eq  = source_eq and fqdn_eq
