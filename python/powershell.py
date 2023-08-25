@@ -43,27 +43,28 @@ def get_ad_computers_dump(output_file_path: str) -> list[ADAsset]:
 
 
 def get_dns_dump(zone: str, server: str, output_file: str) -> list[DNSAsset]:
-    dns_assets = []
     run_powershell_script(join("powershell", "Get-DnsDump.ps1"), zone, server, output_file)
     with open(output_file) as out:
         assets = out.readlines()
         out.close()
-        dns_assets.append(
-            DNSAsset(
-                assets[2].split(",")[0],
-                assets[2].split(",")[1]
-            )
-        )
-        for asset in assets[3:]:
-            name = asset.split(",")[0]
-            ip = asset.split(",")[1]
-            dns_asset: DNSAsset = DNSAsset(name, ip)
-            if zone in dns_asset.hostname and dns_asset.ip == dns_assets[-1].ip:
-                dns_assets[-1].set_fqdn(dns_asset.hostname)
-            elif dns_asset in dns_assets:
-                continue
-            else:
-                dns_assets.append(dns_asset)
+    return make_dns_assets(assets[1:])
+
+
+def make_dns_assets(assets: list[str]) -> list[DNSAsset]:
+    dns_assets = [DNSAsset(
+        assets[0].split(",")[0],
+        assets[0].split(",")[1]
+    )]
+    for asset in assets[1:]:
+        name = asset.split(",")[0]
+        ip = asset.split(",")[1]
+        dns_asset: DNSAsset = DNSAsset(name, ip)
+        if dns_assets[-1].hostname == dns_asset.hostname.split(".")[0] and dns_asset.ip == dns_assets[-1].ip:
+            dns_assets[-1].set_fqdn(dns_asset.hostname)
+        elif dns_asset in dns_assets:
+            continue
+        else:
+            dns_assets.append(dns_asset)
     return dns_assets
 
 
