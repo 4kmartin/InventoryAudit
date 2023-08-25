@@ -4,8 +4,10 @@ from sqlite3 import Connection
 from os.path import join
 
 
-def write_report_to_file(report_name: str, query_output: list[tuple], description: str = ""):
-    report = f"{description}\nHostname, Fully Qualified Domain Name, IPv4 Address, MAC Address\n"
+def write_report_to_file(report_name: str, query_output: list[tuple], description: str = "",
+                         header_row: tuple[str, ...] = (
+                         "Hostname", "Fully Qualified Domain Name", "IPv4 Address", "MAC Address")):
+    report = f"{description}\n{','.join(header_row)}\n"
     for asset in query_output:
         report += ", ".join([str(i).replace(",", "::") if i else "" for i in asset])
         report += "\n"
@@ -29,14 +31,15 @@ def report_assets_not_joined_to_domain(connection: Connection) -> list[Asset]:
 
 
 def report_has_company_antimalware(connection: Connection, antimalware_software: str) -> list[Asset]:
-    """requires anti-malware be ingested as a datasource"""
+    """requires antimalware be ingested as a datasource"""
     # TODO
     pass
 
 
 def report_not_found_in_company_asset_inventory(connection: Connection) -> None:
-    statement = "SELECT * FROM reportable_data WHERE in_inventory = 0 AND hostname NOT NULL"
+    statement = "SELECT DISTINCT * FROM reportable_data WHERE in_inventory = 0 AND hostname NOT NULL AND hostname NOT REGEXP '[a-z0-9\\-\\.]*\\.com' AND hostname != '' AND hostname != '@'"
     output = _run_select_statement(connection, statement)
     write_report_to_file("NotInventoried", output,
                          "THESE REPORTED DEVICES WERE FOUND IN THE DATABASE OF A SOFTWARE USED BY THE COMPANY BUT NOT "
-                         "IN THE INVENTORY")
+                         "IN THE INVENTORY",
+                         ("Sources", "Hostname", "Fully Qualified Domain Name", "IPv4 Address", "MAC Address"))
