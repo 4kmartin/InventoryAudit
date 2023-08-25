@@ -23,7 +23,7 @@ class Asset:
         fn_hn_eq = self.fqdn is not None and self.fqdn == other_asset.hostname
         hn_fn_eq = self.hostname is not None and self.hostname == other_asset.fqdn
         cross_eq = fn_hn_eq or hn_fn_eq
-        qualified_hn_eq = source_eq and hosstname_eq
+        qualified_hn_eq = source_eq and hostname_eq
         qualified_fn_eq  = source_eq and fqdn_eq
         qualified_cross = source_eq and cross_eq
         all_eq = source_eq and hostname_eq and fqdn_eq and self.ip == other_asset.ip and self.mac == other_asset.mac 
