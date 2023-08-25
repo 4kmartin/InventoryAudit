@@ -10,7 +10,7 @@ class Asset:
         self.hostname = hostname.lower().replace("\"", "").replace("\'", "") if isinstance(hostname, str) else \
             fqdn.split(".")[0].lower().replace("\"", "").replace("\'", "") if isinstance(fqdn, str) else None
         self.fqdn = fqdn.lower().replace("\"", "").replace("\'", "") if isinstance(fqdn, str) else None
-        self.ip = ip.replace("\"", "").replace("\'", "") if isinstance(ip, str) else None
+        self.ip = ip.replace("\"", "").replace("\'", "").replace("...","") if isinstance(ip, str) else None
         self.mac = mac.replace(":", "").replace("-", "") if isinstance(mac, str) else None
         self.date_discovered = date.today().toordinal()
         self.source = data_source
