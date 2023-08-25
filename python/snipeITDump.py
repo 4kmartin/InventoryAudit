@@ -2,25 +2,25 @@ from requests import get, Response
 from python.asset import Asset
 from typing import Optional
 
-class SnipeItAsset (Asset):
 
-    def __init__(self, hostname:Optional[str], mac:Optional[str]) -> None:
+class SnipeItAsset(Asset):
+
+    def __init__(self, hostname: Optional[str], mac: Optional[str]) -> None:
         Asset.__init__(self, "Snipe-IT", hostname, None, None, mac)
 
 
-def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[SnipeItAsset]:
-
+def get_all_asset_names(snipe_it_url: str, personal_access_token: str) -> list[SnipeItAsset]:
     url = f"{snipe_it_url}/api/v1/hardware"
 
     headers = {
-        "Accept":"application/json",
-        "Content-Type":"application/json",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
         "Authorization": f"Bearer {personal_access_token}"
     }
 
     assets = []
     offset = 0
-    response = _paginated_get_req(url,headers,100, offset)
+    response = _paginated_get_req(url, headers, 100, offset)
 
     while response.json()["total"] > offset:
         for asset in response.json()["rows"]:
@@ -42,9 +42,10 @@ def get_all_asset_names (snipe_it_url:str, personal_access_token:str) -> list[Sn
                     )
                 )
         offset += 100
-        response = _paginated_get_req(url,headers,100,offset)
+        response = _paginated_get_req(url, headers, 100, offset)
     return assets
 
-def _paginated_get_req (url:str, headers:dict[str,str],limit:int,offset:int) -> Response:
+
+def _paginated_get_req(url: str, headers: dict[str, str], limit: int, offset: int) -> Response:
     modified_url = f"{url}?limit={limit}&offset={offset}&sort=id&order=asc"
     return get(modified_url, headers=headers)

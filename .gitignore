@@ -8,3 +8,5 @@ python/lib
 python/include
 python/pyvenv.cfg
 python/__pycache__
+/venv/
+.idea
