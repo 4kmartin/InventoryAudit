@@ -55,9 +55,12 @@ def get_dns_dump(zone:str, server:str, output_file:str) -> list[DNSAsset]:
 		for asset in assets[3:]:
 			name = asset.split(",")[0]
 			ip = asset.split(",")[1]
-			if zone in name and ip == dnsassets[-1].ip:
+			dnsasset = DNSAsset(name,ip)
+			if zone in dnsasset.hostname and dnsasset.ip == dnsassets[-1].ip:
 				print(f"adding fqdn: {hostname} to asset: {dnsassets[-1].hostname}")
-				dnsassets[-1].set_fqdn(name)
+				dnsassets[-1].set_fqdn(dnssasset.hostname)
+			elif dnssasset in dnsassets:
+				continue
 			else:
 				dnsassets.append(DNSAsset(name, ip))
 	return dnsassets
