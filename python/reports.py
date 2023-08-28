@@ -16,7 +16,7 @@ def write_report_to_file(report_name: str, query_output: list[tuple], descriptio
                                  "Hostname", "Fully Qualified Domain Name", "IPv4 Address", "MAC Address")):
     report = f"{description}\n{','.join(header_row)}\n"
     for asset in query_output:
-        report += ", ".join([str(i).replace(",", "::") if i else "" for i in asset])
+        report += ", ".join([str(i).replace(",", "::") if i else "NULL" for i in asset])
         report += "\n"
     file = join("csv", f"{report_name}.csv")
     with open(file, "w") as report_file:
