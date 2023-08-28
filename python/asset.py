@@ -7,11 +7,10 @@ class Asset:
 
     def __init__(self, data_source: str, hostname: Optional[str], fqdn: Optional[str], ip: Optional[str],
                  mac: Optional[str]) -> None:
-        self.hostname = hostname.lower().replace("\"", "").replace("\'", "").replace("...","") if isinstance(hostname, str) else \
-            fqdn.split(".")[0].lower().replace("\"", "").replace("\'", "").replace("...","") if isinstance(fqdn, str) else None
-        self.fqdn = fqdn.lower().replace("\"", "").replace("\'", "").replace("...","") if isinstance(fqdn, str) else None
-        self.ip = ip.replace("\"", "").replace("\'", "").replace("...","") if isinstance(ip, str) else None
-        self.mac = mac.replace(":", "").replace("-", "").replace("...","") if isinstance(mac, str) else None
+        self.hostname = sanitize_string_value(hostname) if hostname else sanitize_string_value(fqdn)
+        self.fqdn = sanitize_string_value(fqdn)
+        self.ip = sanitize_string_value(ip)
+        self.mac = sanitize_string_value(mac)
         self.date_discovered = date.today().toordinal()
         self.source = data_source
 
@@ -34,3 +33,15 @@ class Asset:
 
     def __repr__(self) -> str:
         return f"Asset; source:{self.source} date:{date.fromordinal(self.date_discovered)} hostname:{self.hostname} fqdn:{self.fqdn} ip:{self.ip} mac:{self.mac}"
+
+
+def sanitize_string_value(string: Optional[str]) -> Optional[str]:
+    if string and string != "" and string != " ":
+        string: str = string.lower().replace("\"", "").replace("\'", "") .replace("...", "").replace(":", "").replace("-", "")
+        # added this check in case string had a value like "''"
+        if string != "" and string != " ":
+            return string
+        else:
+            return None
+    else:
+        return None
