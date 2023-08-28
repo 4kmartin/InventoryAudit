@@ -23,8 +23,8 @@ def open_config() -> dict:
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
-def reg_exp(expression: Optional[str], item: Any) -> bool:
-    if expression is None:
+def reg_exp(expression: str, item: Optional[str]) -> bool:
+    if item is None:
         return False
     reg = re.compile(expression)
     return reg.search(item) is not None
