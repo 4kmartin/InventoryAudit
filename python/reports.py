@@ -45,17 +45,16 @@ def report_has_company_antimalware(connection: Connection, antimalware_software:
 
 def report_not_found_in_company_asset_inventory(connection: Connection) -> None:
     connection.create_function("REGEXP", 2, reg_exp)
-    statement = " ".join(
-        (
-            "SELECT DISTINCT *",
-            "FROM reportable_data",
-            "WHERE in_inventory = 0 AND",
-            "hostname NOT NULL AND",
-            "hostname NOT REGEXP",
-            r"'[a-z0-9\-\.]*\.com' AND",
-            "hostname != '' AND hostname != '@'"
-        )
+    statement = '''SELECT DISTINCT *
+    FROM reportable_data
+    WHERE hostname IN (
+        SELECT DISTINCT hostname
+            FROM reportable_data
+            WHERE in_inventory = 0 AND 
+                hostname NOT NULL AND
+                hostname != '@'
     )
+    ORDER BY hostname;'''
     output = _run_select_statement(connection, statement)
     write_report_to_file("NotInventoried", output,
                          "THESE REPORTED DEVICES WERE FOUND IN THE DATABASE OF A SOFTWARE USED BY THE COMPANY BUT NOT "
