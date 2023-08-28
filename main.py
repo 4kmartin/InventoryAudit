@@ -3,7 +3,10 @@ from python.dbMaintainance import populate_report_table, get_db_connection, inse
     create_asset_table, migrate_to_historical_data
 from os import name as os_name
 from python.reports import report_not_found_in_company_asset_inventory
+from python.asset import Asset
+from typing import Any, Optional
 import yaml
+import re
 
 
 def db_exists() -> bool:
@@ -18,6 +21,29 @@ def get_db_path() -> str:
 def open_config() -> dict:
     with open("config.yml") as f:
         return yaml.load(f, Loader=yaml.FullLoader)
+
+
+def reg_exp(expression: str, item: Any) -> bool:
+    reg = re.compile(expression)
+    return reg.search(item) is not None
+
+
+def hostname_is_fqdn(hostname: Optional[str]) -> bool:
+    exp = r"[a-z0-9\-\.]*\.com"
+    return reg_exp(exp, hostname)
+
+
+def cleanup(raw_assets: list[Asset]) -> list[Asset]:
+    cleaned: list[Asset] = []
+    for asset in raw_assets:
+        if hostname_is_fqdn(asset.hostname) and asset.fqdn is None:
+            asset.fqdn = asset.hostname
+            asset.hostname = None
+        elif hostname_is_fqdn(asset.hostname):
+            continue
+
+        cleaned.append(asset)
+    return cleaned
 
 
 if __name__ == '__main__':
@@ -65,14 +91,12 @@ if __name__ == '__main__':
             case "Active Directory":
                 if os_name == "nt":
                     from python.powershell import get_ad_computers_dump
-
                     assets += get_ad_computers_dump(join("csv", "ADOut.csv"))
                 else:
                     print(f"cannot run {source} query on non Windows OS")
             case "DNS":
                 if os_name == "nt":
                     from python.powershell import get_dns_dump
-
                     dns = CONFIG["DNS"]
                     assets += get_dns_dump(
                         dns["zone"],
@@ -83,18 +107,15 @@ if __name__ == '__main__':
                     print(f"cannot run {source} query on non Windows OS")
             case "Snipe-IT":
                 from python.snipeITDump import get_all_asset_names
-
                 assets += get_all_asset_names(CONFIG["Snipe-IT"]["url"], CONFIG["Snipe-IT"]["personal access token"])
             case "DHCP":
                 if os_name == "nt":
                     from python.powershell import get_dhcp_dump
-
                     dhcp = CONFIG["DHCP"]
                     assets += get_dhcp_dump(
                         dhcp["server"],
                         join("csv", "DHCPOut.csv")
                     )
-
                 else:
                     print(f"cannot run {source} query on non Windows OS")
             case _:
@@ -107,7 +128,7 @@ if __name__ == '__main__':
     insert_all(
         db,
         "discovered_assets",
-        list(map(lambda x: x.to_tuple(), assets)),
+        list(map(lambda x: x.to_tuple(), cleanup(assets))),
         ("source", "date_found", "hostname", "fqdn", "ip", "mac")
     )
 
