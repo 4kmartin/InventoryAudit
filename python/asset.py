@@ -7,7 +7,7 @@ class Asset:
 
     def __init__(self, data_source: str, hostname: Optional[str], fqdn: Optional[str], ip: Optional[str],
                  mac: Optional[str]) -> None:
-        self.hostname = sanitize_string_value(hostname) if hostname else sanitize_string_value(fqdn)
+        self.hostname = sanitize_string_value(hostname)
         self.fqdn = sanitize_string_value(fqdn)
         self.ip = sanitize_string_value(ip)
         self.mac = sanitize_string_value(mac)
