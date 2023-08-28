@@ -37,7 +37,7 @@ class Asset:
 
 def sanitize_string_value(string: Optional[str]) -> Optional[str]:
     if string and string != "" and string != " ":
-        string: str = string.lower().replace("\"", "").replace("\'", "") .replace("...", "").replace(":", "").replace("-", "")
+        string: str = string.lower().replace("\"", "").replace("\'", "") .replace("...", "").replace(":", "")
         # added this check in case string had a value like "''"
         if string != "" and string != " ":
             return string
