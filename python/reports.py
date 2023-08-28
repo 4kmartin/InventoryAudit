@@ -63,4 +63,4 @@ def report_not_found_in_company_asset_inventory(connection: Connection) -> None:
     write_report_to_file("NotInventoried", output,
                          "THESE REPORTED DEVICES WERE FOUND IN THE DATABASE OF A SOFTWARE USED BY THE COMPANY BUT NOT "
                          "IN THE INVENTORY",
-                         ("Sources", "Hostname", "Fully Qualified Domain Name", "IPv4 Address", "MAC Address"))
+                         ("Sources", "Hostname", "IPv4 Address", "MAC Address"))
