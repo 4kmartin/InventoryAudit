@@ -45,7 +45,11 @@ def report_has_company_antimalware(connection: Connection, antimalware_software:
 
 def report_not_found_in_company_asset_inventory(connection: Connection) -> None:
     connection.create_function("REGEXP", 2, reg_exp)
-    statement = '''SELECT DISTINCT *
+    statement = '''SELECT DISTINCT
+    source,
+    hostname,
+    ip,
+    mac
     FROM reportable_data
     WHERE hostname IN (
         SELECT DISTINCT hostname
